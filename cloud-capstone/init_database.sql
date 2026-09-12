@@ -30,3 +30,18 @@ SELECT *
 FROM MedicineInventory
 WHERE CurrentStock < ReorderLevel;
 GO
+
+-- Step 4: Create ReplenishmentRequests table to track status
+CREATE TABLE ReplenishmentRequests (
+    ReplenishmentId   VARCHAR(50) PRIMARY KEY,
+    PharmacyId        VARCHAR(30),
+    MedicineCode      VARCHAR(30),
+    MedicineName      VARCHAR(100),
+    CurrentStock      INT,
+    ReorderLevel      INT,
+    QuantityNeeded    INT,
+    Status            VARCHAR(30) DEFAULT 'submitted',
+    CreatedAt         DATETIME2  DEFAULT GETDATE(),
+    UpdatedAt         DATETIME2  DEFAULT GETDATE()
+);
+GO
