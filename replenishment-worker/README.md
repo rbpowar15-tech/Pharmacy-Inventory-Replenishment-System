@@ -14,3 +14,4 @@ from Service Bus and writes reports to Azure Blob Storage.
 1. Copy `.env.example` to `.env` and fill in values
 2. Set `USE_SQL_LOGIN=true` for local development
 3. Run: `python worker.py`
+# triggered
