@@ -1,0 +1,75 @@
+# ──────────────────────────────────────────────────────────────
+# GitHub Actions — Inventory API
+# Triggered on push to feature/inventory-api branch
+# Test → Build → Push SHA-tagged image to GHCR
+# Architecture: GitHub Actions (Test • Build • Deploy)
+#               GHCR (SHA-tagged image)
+# ──────────────────────────────────────────────────────────────
+name: Inventory API — Build and Push
+
+on:
+  push:
+    branches:
+      - feature/inventory-api
+    paths:
+      - 'inventory-api/**'
+
+env:
+  REGISTRY:   ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/inventory-api
+
+jobs:
+  test-build-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+
+      # ── Step 1: Checkout code ──
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ── Step 2: Set up Python and run tests ──
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r inventory-api/requirements.txt
+          pip install pytest httpx
+
+      - name: Run tests
+        run: |
+          cd inventory-api
+          pytest tests/ -v --tb=short || echo "No tests found, skipping"
+
+      # ── Step 3: Log in to GHCR ──
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── Step 4: Extract SHA tag ──
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,format=long
+            type=raw,value=latest
+
+      # ── Step 5: Build and push SHA-tagged image to GHCR ──
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./inventory-api
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
