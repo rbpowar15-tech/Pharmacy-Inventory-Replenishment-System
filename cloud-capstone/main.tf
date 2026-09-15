@@ -297,3 +297,33 @@ resource "azurerm_storage_container" "reports" {
   storage_account_name  = azurerm_storage_account.storage.name
   container_access_type = "private"
 }
+
+# ══════════════════════════════════════════════
+# STEP 7 — Service Bus Namespace & Queue
+# Integration Layer: Decouples API from
+# replenishment processing asynchronously
+# ══════════════════════════════════════════════
+resource "azurerm_servicebus_namespace" "sb" {
+  name                = "sb-pharmacy-${random_string.suffix.result}"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+  sku                 = "Standard"
+  tags                = var.project_tags
+}
+
+resource "azurerm_servicebus_queue" "replenishment_queue" {
+  name         = "replenishment-queue"
+  namespace_id = azurerm_servicebus_namespace.sb.id
+
+  # Message stays in queue for 7 days if not processed
+  default_message_ttl              = "P7D"
+
+  # Lock message for 60 seconds while worker processes it
+  lock_duration                    = "PT1M"
+
+  # Retry up to 10 times before sending to dead-letter queue
+  max_delivery_count               = 10
+
+  # Enable dead-letter queue for failed messages
+  dead_lettering_on_message_expiration = true
+}
