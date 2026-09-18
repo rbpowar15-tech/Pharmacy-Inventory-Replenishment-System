@@ -11,6 +11,7 @@ on:
   push:
     branches:
       - feature/inventory-api
+      - main
     paths:
       - 'inventory-api/**'
 
