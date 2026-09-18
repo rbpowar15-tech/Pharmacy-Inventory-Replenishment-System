@@ -8,40 +8,100 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Arial, sans-serif; background: #f4f6f9; padding: 30px; }
     h1   { color: #461E96; margin-bottom: 5px; }
+    h2   { color: #461E96; font-size: 16px; margin-bottom: 12px; margin-top: 0; }
     p    { color: #555; margin-bottom: 20px; }
-    .card { background: white; padding: 30px; border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 960px; margin: auto; }
-    .row  { display: flex; gap: 10px; margin-bottom: 15px; }
-    input { padding: 10px; flex: 1; border: 1px solid #ccc;
-            border-radius: 5px; font-size: 14px; }
-    button { padding: 10px 18px; border: none; border-radius: 5px;
-             cursor: pointer; font-size: 14px; color: white; }
+
+    .card {
+      background: white; padding: 30px; border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      max-width: 960px; margin: auto;
+    }
+
+    .section {
+      border: 1px solid #e0e0e0; border-radius: 8px;
+      padding: 20px; margin-bottom: 24px;
+    }
+
+    .section-title {
+      font-size: 14px; font-weight: bold; color: #461E96;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      margin-bottom: 14px; padding-bottom: 8px;
+      border-bottom: 2px solid #f0eaff;
+    }
+
+    .row  { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+
+    input {
+      padding: 10px; flex: 1; min-width: 160px;
+      border: 1px solid #ccc; border-radius: 5px; font-size: 14px;
+    }
+
+    input:focus { outline: none; border-color: #461E96; }
+
+    button {
+      padding: 10px 18px; border: none; border-radius: 5px;
+      cursor: pointer; font-size: 14px; color: white; white-space: nowrap;
+    }
+
     .btn-primary   { background: #461E96; }
     .btn-secondary { background: #00B4E6; }
+    .btn-warning   { background: #E6008C; }
     button:hover   { opacity: 0.85; }
-    table  { width: 100%; border-collapse: collapse; margin-top: 20px; }
+
+    table  { width: 100%; border-collapse: collapse; margin-top: 16px; }
     th     { background: #461E96; color: white; padding: 10px; text-align: left; }
-    td     { padding: 10px; border-bottom: 1px solid #eee; }
-    .badge-low { background: #E6008C; color: white; padding: 3px 10px;
-                 border-radius: 10px; font-size: 12px; }
-    .badge-ok  { background: #00DC8C; color: white; padding: 3px 10px;
-                 border-radius: 10px; font-size: 12px; }
-    .status { margin-top: 12px; font-style: italic; color: #555; }
+    td     { padding: 10px; border-bottom: 1px solid #eee; font-size: 14px; }
+
+    .badge-low {
+      background: #E6008C; color: white;
+      padding: 3px 10px; border-radius: 10px; font-size: 12px;
+    }
+    .badge-ok  {
+      background: #00DC8C; color: white;
+      padding: 3px 10px; border-radius: 10px; font-size: 12px;
+    }
+
+    .status {
+      margin-top: 10px; font-style: italic;
+      color: #555; font-size: 14px; min-height: 20px;
+    }
+    .status.success { color: #007700; font-style: normal; font-weight: bold; }
+    .status.error   { color: #cc0000; font-style: normal; font-weight: bold; }
+    .status.warning { color: #E6008C; font-style: normal; font-weight: bold; }
+
     tr.low  { background: #fff0f5; }
+
+    .alert-box {
+      background: #fff0f5; border: 1px solid #E6008C;
+      border-radius: 8px; padding: 14px 18px;
+      margin-top: 14px; display: none;
+    }
+    .alert-box p { color: #cc0000; margin: 0; font-weight: bold; }
+
+    .divider { border: none; border-top: 1px solid #eee; margin: 10px 0 20px 0; }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>💊 Pharmacy Inventory Replenishment</h1>
-    <p>Enter your Pharmacy ID to view inventory or check what needs replenishment.</p>
+<div class="card">
 
+  <h1>💊 Pharmacy Inventory Replenishment</h1>
+  <p>Manage medicine inventory, check replenishment needs, and update stock levels.</p>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!--  SECTION 1: View Inventory & Replenishment  -->
+  <!-- ─────────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-title">📋 View Inventory / Check Replenishment</div>
     <div class="row">
-      <input type="text" id="pharmacyId" placeholder="Enter Pharmacy ID (e.g. PH001)"/>
+      <input
+        type="text"
+        id="pharmacyId"
+        placeholder="Enter Pharmacy ID (e.g. PH001)"
+      />
       <button class="btn-primary"   onclick="getInventory()">View All Inventory</button>
       <button class="btn-secondary" onclick="checkReplenishment()">Check Replenishment</button>
     </div>
-
-    <div class="status" id="status"></div>
+    <div class="status" id="view-status"></div>
 
     <table id="result-table" style="display:none;">
       <thead>
@@ -58,73 +118,231 @@
     </table>
   </div>
 
-  <script>
-    // ── View All Inventory ──
-    async function getInventory() {
-      const pharmacyId = document.getElementById("pharmacyId").value.trim();
-      if (!pharmacyId) { alert("Please enter a Pharmacy ID"); return; }
-      setStatus("Fetching inventory...");
+  <!-- ─────────────────────────────────────────── -->
+  <!--  SECTION 2: Update Stock Level              -->
+  <!-- ─────────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-title">✏️ Update Medicine Stock Level</div>
+    <p style="margin-bottom:14px; font-size:13px; color:#666;">
+      Enter the Pharmacy ID, Medicine Code, and the new stock quantity.
+      If the updated stock falls below the reorder level, a replenishment
+      alert will be triggered automatically via Service Bus.
+    </p>
 
+    <div class="row">
+      <input
+        type="text"
+        id="update-pharmacyId"
+        placeholder="Pharmacy ID (e.g. PH001)"
+      />
+      <input
+        type="text"
+        id="update-medicineCode"
+        placeholder="Medicine Code (e.g. MED002)"
+      />
+      <input
+        type="number"
+        id="update-stock"
+        placeholder="New Stock Quantity"
+        min="0"
+      />
+      <button class="btn-warning" onclick="updateStock()">Update Stock</button>
+    </div>
+
+    <div class="status" id="update-status"></div>
+
+    <!-- Low stock alert box shown after update if triggered -->
+    <div class="alert-box" id="low-stock-alert">
+      <p>⚠️ Low Stock Alert! This medicine has dropped below its reorder level.
+         A replenishment request has been automatically sent to the Service Bus queue.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ─────────────────────────────────────────────
+  //  SECTION 1: View All Inventory
+  // ─────────────────────────────────────────────
+  async function getInventory() {
+    const pharmacyId = document.getElementById("pharmacyId").value.trim();
+    if (!pharmacyId) { alert("Please enter a Pharmacy ID"); return; }
+
+    setStatus("view-status", "Fetching inventory...", "");
+    hideTable();
+
+    try {
       const res = await fetch(`/inventory/${pharmacyId}`);
-      if (!res.ok) { setStatus("❌ Error fetching inventory."); return; }
-
+      if (!res.ok) {
+        const err = await res.json();
+        setStatus("view-status", `❌ Error: ${err.detail}`, "error");
+        return;
+      }
       const data = await res.json();
       renderTable(data);
-      setStatus(`Showing all inventory for ${pharmacyId} — ${data.length} medicine(s) found.`);
+      setStatus(
+        "view-status",
+        `✅ Showing all inventory for ${pharmacyId} — ${data.length} medicine(s) found.`,
+        "success"
+      );
+    } catch (e) {
+      setStatus("view-status", "❌ Network error fetching inventory.", "error");
     }
+  }
 
-    // ── Check Replenishment (POST /replenishments) ──
-    async function checkReplenishment() {
-      const pharmacyId = document.getElementById("pharmacyId").value.trim();
-      if (!pharmacyId) { alert("Please enter a Pharmacy ID"); return; }
-      setStatus("Checking replenishment needs...");
+  // ─────────────────────────────────────────────
+  //  SECTION 1: Check Replenishment
+  // ─────────────────────────────────────────────
+  async function checkReplenishment() {
+    const pharmacyId = document.getElementById("pharmacyId").value.trim();
+    if (!pharmacyId) { alert("Please enter a Pharmacy ID"); return; }
 
+    setStatus("view-status", "Checking replenishment needs...", "");
+    hideTable();
+
+    try {
       const res = await fetch(`/replenishments`, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ pharmacyId })
       });
 
-      if (!res.ok) { setStatus("❌ Error checking replenishment."); return; }
+      if (!res.ok) {
+        const err = await res.json();
+        setStatus("view-status", `❌ Error: ${err.detail}`, "error");
+        return;
+      }
 
       const data = await res.json();
+
       if (!data.items || data.items.length === 0) {
-        setStatus("✅ All medicines are sufficiently stocked!");
-        document.getElementById("result-table").style.display = "none";
+        setStatus("view-status", "✅ All medicines are sufficiently stocked!", "success");
         return;
       }
 
       renderTable(data.items.map(i => ({ ...i, needsReplenishment: true })));
-      setStatus(`⚠️ ${data.items.length} medicine(s) need replenishment — Request ID: ${data.replenishmentId}`);
+      setStatus(
+        "view-status",
+        `⚠️ ${data.items.length} medicine(s) need replenishment — Request ID: ${data.replenishmentId}`,
+        "warning"
+      );
+    } catch (e) {
+      setStatus("view-status", "❌ Network error checking replenishment.", "error");
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  //  SECTION 2: Update Stock Level
+  //  Calls: PUT /inventory/{pharmacyId}/{medicineCode}
+  //  Body:  { "currentStock": <number> }
+  // ─────────────────────────────────────────────
+  async function updateStock() {
+    const pharmacyId   = document.getElementById("update-pharmacyId").value.trim();
+    const medicineCode = document.getElementById("update-medicineCode").value.trim();
+    const newStock     = document.getElementById("update-stock").value.trim();
+
+    // Input validation
+    if (!pharmacyId)   { alert("Please enter a Pharmacy ID");    return; }
+    if (!medicineCode) { alert("Please enter a Medicine Code");   return; }
+    if (newStock === "") { alert("Please enter a stock quantity"); return; }
+    if (parseInt(newStock) < 0) {
+      alert("Stock quantity cannot be negative"); return;
     }
 
-    // ── Render Table ──
-    function renderTable(data) {
-      const tbody = document.getElementById("result-body");
-      tbody.innerHTML = "";
-      data.forEach(row => {
-        const low = row.needsReplenishment;
-        const qtyNeeded = low
-          ? (row.quantityNeeded ?? (row.reorderLevel - row.currentStock))
-          : "—";
-        tbody.innerHTML += `
-          <tr class="${low ? 'low' : ''}">
-            <td>${row.medicineCode}</td>
-            <td>${row.medicineName}</td>
-            <td>${row.currentStock}</td>
-            <td>${row.reorderLevel}</td>
-            <td>${qtyNeeded}</td>
-            <td><span class="${low ? 'badge-low' : 'badge-ok'}">
-              ${low ? '⚠ Low Stock' : '✅ OK'}
-            </span></td>
-          </tr>`;
-      });
-      document.getElementById("result-table").style.display = "table";
-    }
+    setStatus("update-status", "Updating stock...", "");
+    document.getElementById("low-stock-alert").style.display = "none";
 
-    function setStatus(msg) {
-      document.getElementById("status").innerText = msg;
+    try {
+      const res = await fetch(
+        `/inventory/${pharmacyId}/${medicineCode}`,
+        {
+          method:  "PUT",
+          headers: { "Content-Type": "application/json" },
+          body:    JSON.stringify({ currentStock: parseInt(newStock) })
+        }
+      );
+
+      if (!res.ok) {
+        const err = await res.json();
+        setStatus("update-status", `❌ Update failed: ${err.detail}`, "error");
+        return;
+      }
+
+      const data = await res.json();
+
+      // Show success message
+      setStatus(
+        "update-status",
+        `✅ Stock updated successfully for ${medicineCode} at ${pharmacyId}. New stock: ${newStock}.`,
+        "success"
+      );
+
+      // If low stock alert was triggered by the backend → show alert box
+      if (data.lowStockAlert) {
+        document.getElementById("low-stock-alert").style.display = "block";
+        setStatus(
+          "update-status",
+          `✅ Stock updated. ⚠️ Low Stock Alert triggered for ${medicineCode} — replenishment sent to queue!`,
+          "warning"
+        );
+      }
+
+      // Auto-refresh the inventory table if it's currently visible
+      const table = document.getElementById("result-table");
+      const currentPharmacyId = document.getElementById("pharmacyId").value.trim();
+      if (table.style.display !== "none" && currentPharmacyId === pharmacyId) {
+        await getInventory();
+      }
+
+    } catch (e) {
+      setStatus("update-status", "❌ Network error updating stock.", "error");
     }
-  </script>
+  }
+
+  // ─────────────────────────────────────────────
+  //  Shared: Render Inventory Table
+  // ─────────────────────────────────────────────
+  function renderTable(data) {
+    const tbody = document.getElementById("result-body");
+    tbody.innerHTML = "";
+
+    data.forEach(row => {
+      const low = row.needsReplenishment;
+      const qtyNeeded = low
+        ? (row.quantityNeeded ?? (row.reorderLevel - row.currentStock))
+        : "—";
+
+      tbody.innerHTML += `
+        <tr class="${low ? 'low' : ''}">
+          <td>${row.medicineCode}</td>
+          <td>${row.medicineName}</td>
+          <td>${row.currentStock}</td>
+          <td>${row.reorderLevel}</td>
+          <td>${qtyNeeded}</td>
+          <td>
+            <span class="${low ? 'badge-low' : 'badge-ok'}">
+              ${low ? '🔴 Low Stock' : '🟢 OK'}
+            </span>
+          </td>
+        </tr>`;
+    });
+
+    document.getElementById("result-table").style.display = "table";
+  }
+
+  // ─────────────────────────────────────────────
+  //  Helpers
+  // ─────────────────────────────────────────────
+  function setStatus(elementId, msg, type) {
+    const el = document.getElementById(elementId);
+    el.innerText = msg;
+    el.className = `status ${type}`;
+  }
+
+  function hideTable() {
+    document.getElementById("result-table").style.display = "none";
+    document.getElementById("result-body").innerHTML = "";
+  }
+</script>
 </body>
 </html>
