@@ -79,6 +79,14 @@
     .alert-box p { color: #cc0000; margin: 0; font-weight: bold; }
 
     .divider { border: none; border-top: 1px solid #eee; margin: 10px 0 20px 0; }
+
+    .stock-breakdown {
+      background: #f0f9ff; border: 1px solid #00B4E6;
+      border-radius: 8px; padding: 14px 18px;
+      margin-top: 14px; display: none;
+      font-size: 14px;
+    }
+    .stock-breakdown span { font-weight: bold; color: #461E96; }
   </style>
 </head>
 <body>
@@ -119,14 +127,15 @@
   </div>
 
   <!-- ─────────────────────────────────────────── -->
-  <!--  SECTION 2: Update Stock Level              -->
+  <!--  SECTION 2: Dispense Medicine / Update Stock -->
   <!-- ─────────────────────────────────────────── -->
   <div class="section">
-    <div class="section-title">✏️ Update Medicine Stock Level</div>
+    <div class="section-title">✏️ Dispense Medicine / Update Stock Used</div>
     <p style="margin-bottom:14px; font-size:13px; color:#666;">
-      Enter the Pharmacy ID, Medicine Code, and the new stock quantity.
-      If the updated stock falls below the reorder level, a replenishment
-      alert will be triggered automatically via Service Bus.
+      Enter the Pharmacy ID, Medicine Code, and the quantity of medicine
+      dispensed or used. The system will automatically deduct it from the
+      current stock. If the remaining stock falls below the reorder level,
+      a replenishment alert will be triggered automatically via Service Bus.
     </p>
 
     <div class="row">
@@ -143,13 +152,22 @@
       <input
         type="number"
         id="update-stock"
-        placeholder="New Stock Quantity"
-        min="0"
+        placeholder="Quantity Dispensed / Used"
+        min="1"
       />
-      <button class="btn-warning" onclick="updateStock()">Update Stock</button>
+      <button class="btn-warning" onclick="updateStock()">Dispense Stock</button>
     </div>
 
     <div class="status" id="update-status"></div>
+
+    <!-- Stock breakdown shown after successful dispense -->
+    <div class="stock-breakdown" id="stock-breakdown">
+      <p>
+        📦 Previous Stock: <span id="prev-stock">—</span> units &nbsp;|&nbsp;
+        ➖ Dispensed: <span id="dispensed-qty">—</span> units &nbsp;|&nbsp;
+        ✅ Remaining Stock: <span id="new-stock">—</span> units
+      </p>
+    </div>
 
     <!-- Low stock alert box shown after update if triggered -->
     <div class="alert-box" id="low-stock-alert">
@@ -232,25 +250,27 @@
   }
 
   // ─────────────────────────────────────────────
-  //  SECTION 2: Update Stock Level
+  //  SECTION 2: Dispense Stock
   //  Calls: PUT /inventory/{pharmacyId}/{medicineCode}
-  //  Body:  { "currentStock": <number> }
+  //  Body:  { "stockUsed": <number> }
+  //  Backend calculates: newStock = currentStock - stockUsed
   // ─────────────────────────────────────────────
   async function updateStock() {
     const pharmacyId   = document.getElementById("update-pharmacyId").value.trim();
     const medicineCode = document.getElementById("update-medicineCode").value.trim();
-    const newStock     = document.getElementById("update-stock").value.trim();
+    const stockUsed    = document.getElementById("update-stock").value.trim();
 
     // Input validation
-    if (!pharmacyId)   { alert("Please enter a Pharmacy ID");    return; }
-    if (!medicineCode) { alert("Please enter a Medicine Code");   return; }
-    if (newStock === "") { alert("Please enter a stock quantity"); return; }
-    if (parseInt(newStock) < 0) {
-      alert("Stock quantity cannot be negative"); return;
+    if (!pharmacyId)      { alert("Please enter a Pharmacy ID");              return; }
+    if (!medicineCode)    { alert("Please enter a Medicine Code");             return; }
+    if (stockUsed === "") { alert("Please enter quantity dispensed/used");     return; }
+    if (parseInt(stockUsed) <= 0) {
+      alert("Quantity dispensed must be greater than 0"); return;
     }
 
-    setStatus("update-status", "Updating stock...", "");
-    document.getElementById("low-stock-alert").style.display = "none";
+    setStatus("update-status", "Processing dispensing...", "");
+    document.getElementById("low-stock-alert").style.display  = "none";
+    document.getElementById("stock-breakdown").style.display  = "none";
 
     try {
       const res = await fetch(
@@ -258,37 +278,44 @@
         {
           method:  "PUT",
           headers: { "Content-Type": "application/json" },
-          body:    JSON.stringify({ currentStock: parseInt(newStock) })
+          body:    JSON.stringify({ stockUsed: parseInt(stockUsed) })  // ← sends stockUsed not currentStock
         }
       );
 
       if (!res.ok) {
         const err = await res.json();
-        setStatus("update-status", `❌ Update failed: ${err.detail}`, "error");
+        setStatus("update-status", `❌ Error: ${err.detail}`, "error");
         return;
       }
 
       const data = await res.json();
 
-      // Show success message
+      // Show stock breakdown box
+      // previousStock and newStock come from the updated backend response
+      document.getElementById("prev-stock").innerText    = data.previousStock;
+      document.getElementById("dispensed-qty").innerText = data.stockUsed;
+      document.getElementById("new-stock").innerText     = data.newStock;
+      document.getElementById("stock-breakdown").style.display = "block";
+
+      // Default success status
       setStatus(
         "update-status",
-        `✅ Stock updated successfully for ${medicineCode} at ${pharmacyId}. New stock: ${newStock}.`,
+        `✅ Successfully dispensed ${data.stockUsed} units of ${medicineCode}. Remaining stock: ${data.newStock} units.`,
         "success"
       );
 
-      // If low stock alert was triggered by the backend → show alert box
+      // If low stock alert triggered by backend — show alert box
       if (data.lowStockAlert) {
         document.getElementById("low-stock-alert").style.display = "block";
         setStatus(
           "update-status",
-          `✅ Stock updated. ⚠️ Low Stock Alert triggered for ${medicineCode} — replenishment sent to queue!`,
+          `✅ Dispensed ${data.stockUsed} units. ⚠️ Remaining stock (${data.newStock}) is below reorder level — replenishment sent to Service Bus queue!`,
           "warning"
         );
       }
 
-      // Auto-refresh the inventory table if it's currently visible
-      const table = document.getElementById("result-table");
+      // Auto-refresh the inventory table if it is currently visible
+      const table            = document.getElementById("result-table");
       const currentPharmacyId = document.getElementById("pharmacyId").value.trim();
       if (table.style.display !== "none" && currentPharmacyId === pharmacyId) {
         await getInventory();
