@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from app.database import get_connection
 from azure.servicebus import ServiceBusClient, ServiceBusMessage
 import os, json
+from datetime import datetime
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -46,16 +47,15 @@ def get_inventory(pharmacyId: str):
 
 # ─────────────────────────────────────────────
 # PUT /inventory/{pharmacyId}/{medicineCode}
-# Deducts stock used by pharmacy user
+# Deducts stockUsed from currentStock
 # newStock = currentStock - stockUsed
 # Publishes to Service Bus if stock drops below reorder level
 # ─────────────────────────────────────────────
 @router.put("/inventory/{pharmacyId}/{medicineCode}")
 def update_inventory(pharmacyId: str, medicineCode: str, body: dict):
     try:
-        stock_used = body.get("stockUsed")   # ← CHANGED: from currentStock to stockUsed
+        stock_used = body.get("stockUsed")
 
-        # Validate input
         if stock_used is None:
             raise HTTPException(status_code=400, detail="stockUsed is required")
         if stock_used < 0:
@@ -64,7 +64,7 @@ def update_inventory(pharmacyId: str, medicineCode: str, body: dict):
         conn   = get_connection()
         cursor = conn.cursor()
 
-        # ── Step 1: Fetch current stock from DB first ──
+        # ── Step 1: Fetch current stock from DB ──
         cursor.execute(
             "SELECT CurrentStock FROM MedicineInventory "
             "WHERE PharmacyId = ? AND MedicineCode = ?",
@@ -82,18 +82,16 @@ def update_inventory(pharmacyId: str, medicineCode: str, body: dict):
         current_stock = row[0]
 
         # ── Step 2: Calculate new stock ──
-        # newStock = currentStock - stockUsed
-        new_stock = current_stock - stock_used   # ← KEY CHANGE: subtraction not replacement
+        new_stock = current_stock - stock_used
 
-        # ── Step 3: Prevent stock going below zero ──
         if new_stock < 0:
             conn.close()
             raise HTTPException(
                 status_code=400,
-                detail=f"Cannot dispense {stock_used} units. Only {current_stock} units available in stock."
+                detail=f"Cannot dispense {stock_used} units. Only {current_stock} units available."
             )
 
-        # ── Step 4: Update DB with calculated new stock ──
+        # ── Step 3: Update stock in DB ──
         cursor.execute(
             "UPDATE MedicineInventory SET CurrentStock = ?, LastUpdated = GETDATE() "
             "WHERE PharmacyId = ? AND MedicineCode = ?",
@@ -101,31 +99,53 @@ def update_inventory(pharmacyId: str, medicineCode: str, body: dict):
         )
         conn.commit()
 
-        # ── Step 5: Check if now below reorder level ──
+        # ── Step 4: Check if now below reorder level ──
         cursor.execute(
             "SELECT MedicineName, CurrentStock, ReorderLevel FROM MedicineInventory "
             "WHERE PharmacyId = ? AND MedicineCode = ? AND CurrentStock < ReorderLevel",
             pharmacyId, medicineCode
         )
         low_stock = cursor.fetchone()
-        conn.close()
 
-        # ── Step 6: Publish low-stock event to Service Bus ──
+        # ── Step 5: If low stock — save to ReplenishmentRequests AND publish to Service Bus ──
         if low_stock:
+            # Generate replenishmentId here in the API
+            replenishment_id = (
+                f"REP-{pharmacyId}-{medicineCode}"
+                f"-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+            )
+            qty_needed = low_stock[2] - low_stock[1]
+
+            # Save to ReplenishmentRequests table with status = submitted
+            cursor.execute(
+                """INSERT INTO ReplenishmentRequests
+                (ReplenishmentId, PharmacyId, MedicineCode, MedicineName,
+                CurrentStock, ReorderLevel, QuantityNeeded, Status, CreatedAt, UpdatedAt)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'submitted', GETDATE(), GETDATE())""",
+                replenishment_id, pharmacyId, medicineCode,
+                low_stock[0], low_stock[1], low_stock[2], qty_needed
+            )
+            conn.commit()
+
+            # Publish to Service Bus WITH replenishmentId so worker can update DB
             publish_to_service_bus({
-                "pharmacyId":   pharmacyId,
-                "medicineCode": medicineCode,
-                "medicineName": low_stock[0],
-                "currentStock": low_stock[1],
-                "reorderLevel": low_stock[2]
+                "replenishmentId": replenishment_id,  # ← KEY FIX: worker uses this to update DB
+                "pharmacyId":      pharmacyId,
+                "medicineCode":    medicineCode,
+                "medicineName":    low_stock[0],
+                "currentStock":    low_stock[1],
+                "reorderLevel":    low_stock[2],
+                "quantityNeeded":  qty_needed
             })
 
+        conn.close()
+
         return {
-            "message":        "Stock updated successfully",
-            "previousStock":  current_stock,    # ← NEW: shows what stock was before
-            "stockUsed":      stock_used,        # ← NEW: shows what was deducted
-            "newStock":       new_stock,         # ← NEW: shows the calculated result
-            "lowStockAlert":  bool(low_stock)
+            "message":       "Stock updated successfully",
+            "previousStock": current_stock,
+            "stockUsed":     stock_used,
+            "newStock":      new_stock,
+            "lowStockAlert": bool(low_stock)
         }
 
     except HTTPException:
