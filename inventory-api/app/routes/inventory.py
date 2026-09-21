@@ -30,13 +30,13 @@ def get_inventory(pharmacyId: str):
 
         return [
             {
-                "pharmacyId":        row[0],
-                "medicineCode":      row[1],
-                "medicineName":      row[2],
-                "currentStock":      row[3],
-                "reorderLevel":      row[4],
-                "lastUpdated":       str(row[5]),
-                "needsReplenishment": row[3] < row[4]   # CurrentStock < ReorderLevel
+                "pharmacyId":         row[0],
+                "medicineCode":       row[1],
+                "medicineName":       row[2],
+                "currentStock":       row[3],
+                "reorderLevel":       row[4],
+                "lastUpdated":        str(row[5]),
+                "needsReplenishment": row[3] < row[4]
             }
             for row in rows
         ]
@@ -46,20 +46,54 @@ def get_inventory(pharmacyId: str):
 
 # ─────────────────────────────────────────────
 # PUT /inventory/{pharmacyId}/{medicineCode}
-# Updates stock level for a specific medicine
+# Deducts stock used by pharmacy user
+# newStock = currentStock - stockUsed
 # Publishes to Service Bus if stock drops below reorder level
 # ─────────────────────────────────────────────
 @router.put("/inventory/{pharmacyId}/{medicineCode}")
 def update_inventory(pharmacyId: str, medicineCode: str, body: dict):
     try:
-        new_stock = body.get("currentStock")
-        if new_stock is None:
-            raise HTTPException(status_code=400, detail="currentStock is required")
+        stock_used = body.get("stockUsed")   # ← CHANGED: from currentStock to stockUsed
+
+        # Validate input
+        if stock_used is None:
+            raise HTTPException(status_code=400, detail="stockUsed is required")
+        if stock_used < 0:
+            raise HTTPException(status_code=400, detail="stockUsed cannot be negative")
 
         conn   = get_connection()
         cursor = conn.cursor()
 
-        # Update stock level
+        # ── Step 1: Fetch current stock from DB first ──
+        cursor.execute(
+            "SELECT CurrentStock FROM MedicineInventory "
+            "WHERE PharmacyId = ? AND MedicineCode = ?",
+            pharmacyId, medicineCode
+        )
+        row = cursor.fetchone()
+
+        if not row:
+            conn.close()
+            raise HTTPException(
+                status_code=404,
+                detail=f"Medicine {medicineCode} not found for pharmacy {pharmacyId}"
+            )
+
+        current_stock = row[0]
+
+        # ── Step 2: Calculate new stock ──
+        # newStock = currentStock - stockUsed
+        new_stock = current_stock - stock_used   # ← KEY CHANGE: subtraction not replacement
+
+        # ── Step 3: Prevent stock going below zero ──
+        if new_stock < 0:
+            conn.close()
+            raise HTTPException(
+                status_code=400,
+                detail=f"Cannot dispense {stock_used} units. Only {current_stock} units available in stock."
+            )
+
+        # ── Step 4: Update DB with calculated new stock ──
         cursor.execute(
             "UPDATE MedicineInventory SET CurrentStock = ?, LastUpdated = GETDATE() "
             "WHERE PharmacyId = ? AND MedicineCode = ?",
@@ -67,7 +101,7 @@ def update_inventory(pharmacyId: str, medicineCode: str, body: dict):
         )
         conn.commit()
 
-        # Check if now below reorder level
+        # ── Step 5: Check if now below reorder level ──
         cursor.execute(
             "SELECT MedicineName, CurrentStock, ReorderLevel FROM MedicineInventory "
             "WHERE PharmacyId = ? AND MedicineCode = ? AND CurrentStock < ReorderLevel",
@@ -76,7 +110,7 @@ def update_inventory(pharmacyId: str, medicineCode: str, body: dict):
         low_stock = cursor.fetchone()
         conn.close()
 
-        # Publish low-stock event to Service Bus asynchronously
+        # ── Step 6: Publish low-stock event to Service Bus ──
         if low_stock:
             publish_to_service_bus({
                 "pharmacyId":   pharmacyId,
@@ -87,16 +121,21 @@ def update_inventory(pharmacyId: str, medicineCode: str, body: dict):
             })
 
         return {
-            "message":      "Stock updated successfully",
-            "lowStockAlert": bool(low_stock)
+            "message":        "Stock updated successfully",
+            "previousStock":  current_stock,    # ← NEW: shows what stock was before
+            "stockUsed":      stock_used,        # ← NEW: shows what was deducted
+            "newStock":       new_stock,         # ← NEW: shows the calculated result
+            "lowStockAlert":  bool(low_stock)
         }
+
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 # ─────────────────────────────────────────────
 # Helper — Publish low-stock event to Service Bus
-# Decouples API from replenishment processing
 # ─────────────────────────────────────────────
 def publish_to_service_bus(payload: dict):
     conn_str   = os.getenv("SERVICE_BUS_CONNECTION_STRING")
