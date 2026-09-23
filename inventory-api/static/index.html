@@ -1,1270 +1,1586 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pharmacy Inventory Replenishment</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <style>
-    /* ─── Design Tokens ─────────────────────────────────────────── */
-    :root {
-      --brand-700:  #2f126d;
-      --brand-600:  #461E96;
-      --brand-500:  #5d30b5;
-      --brand-100:  #ede8f9;
-      --brand-50:   #f7f4fe;
-
-      --sky-500:    #00B4E6;
-      --sky-100:    #dff4fc;
-
-      --pink-500:   #E6008C;
-      --pink-100:   #ffe0f3;
-
-      --green-600:  #0a7c52;
-      --green-100:  #d6f4e8;
-      --green-50:   #edfaf3;
-
-      --red-600:    #b42318;
-      --red-100:    #ffe2e0;
-      --red-50:     #fff4f3;
-
-      --amber-600:  #a04400;
-      --amber-100:  #fde8cf;
-
-      --neutral-900: #14111f;
-      --neutral-700: #3a3347;
-      --neutral-500: #6b6279;
-      --neutral-300: #c9c4d4;
-      --neutral-200: #e8e3ef;
-      --neutral-100: #f4f2f8;
-      --neutral-50:  #faf9fc;
-      --white:       #ffffff;
-
-      --radius-sm:  6px;
-      --radius-md:  10px;
-      --radius-lg:  16px;
-      --radius-xl:  22px;
-      --radius-pill: 999px;
-
-      --shadow-xs: 0 1px 2px rgba(20,10,50,.06);
-      --shadow-sm: 0 2px 8px rgba(20,10,50,.08);
-      --shadow-md: 0 6px 20px rgba(20,10,50,.10);
-      --shadow-lg: 0 16px 48px rgba(20,10,50,.13);
-
-      --font: "Inter", "Segoe UI", Arial, sans-serif;
-      --transition: 140ms ease;
-    }
-
-    /* ─── Reset ─────────────────────────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
-
-    body {
-      min-height: 100vh;
-      font-family: var(--font);
-      font-size: 14px;
-      color: var(--neutral-900);
-      background-color: var(--neutral-100);
-      background-image:
-        radial-gradient(ellipse 60% 40% at 5% 0%, rgba(70,30,150,.09) 0%, transparent 60%),
-        radial-gradient(ellipse 50% 35% at 95% 100%, rgba(0,180,230,.07) 0%, transparent 60%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 40px 20px;
-    }
-
-    /* ─── Outer Shell ────────────────────────────────────────────── */
-    .shell {
-      width: 100%;
-      max-width: 1100px;
-    }
-
-    /* ════════════════════════════════════════════════════════════
-       LOGIN SCREEN
-    ════════════════════════════════════════════════════════════ */
-    #login-screen {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      min-height: 640px;
-      border-radius: var(--radius-xl);
-      overflow: hidden;
-      box-shadow: var(--shadow-lg);
-      background: var(--white);
-    }
-
-    /* Left hero panel */
-    .login-hero {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      padding: 52px;
-      background:
-        linear-gradient(150deg, var(--brand-700) 0%, var(--brand-600) 55%, #6735c5 100%);
-      overflow: hidden;
-    }
-
-    .login-hero::before {
-      content: "";
-      position: absolute;
-      top: -80px; left: -80px;
-      width: 380px; height: 380px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(0,180,230,.22), transparent 70%);
-      pointer-events: none;
-    }
-
-    .login-hero::after {
-      content: "";
-      position: absolute;
-      bottom: -60px; right: -60px;
-      width: 300px; height: 300px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(230,0,140,.18), transparent 70%);
-      pointer-events: none;
-    }
-
-    .hero-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      margin-bottom: 28px;
-      padding: 6px 14px;
-      background: rgba(255,255,255,.13);
-      border: 1px solid rgba(255,255,255,.22);
-      border-radius: var(--radius-pill);
-      color: rgba(255,255,255,.85);
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: .5px;
-      width: fit-content;
-    }
-
-    .hero-pill span {
-      width: 7px; height: 7px;
-      background: #5dffc0;
-      border-radius: 50%;
-      display: inline-block;
-      box-shadow: 0 0 0 3px rgba(93,255,192,.25);
-    }
-
-    .login-hero h1 {
-      position: relative;
-      z-index: 1;
-      color: var(--white);
-      font-size: clamp(28px, 3.2vw, 42px);
-      font-weight: 800;
-      line-height: 1.1;
-      letter-spacing: -1.2px;
-      margin-bottom: 16px;
-    }
-
-    .login-hero p {
-      position: relative;
-      z-index: 1;
-      color: rgba(255,255,255,.68);
-      font-size: 14px;
-      line-height: 1.6;
-      max-width: 320px;
-    }
-
-    .hero-features {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-top: 36px;
-    }
-
-    .hero-feature {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      color: rgba(255,255,255,.75);
-      font-size: 13px;
-      font-weight: 500;
-    }
-
-    .hero-feature-icon {
-      width: 28px; height: 28px;
-      border-radius: var(--radius-sm);
-      background: rgba(255,255,255,.12);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 14px;
-      flex-shrink: 0;
-    }
-
-    /* Right form panel */
-    .login-form-panel {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 52px 48px;
-      background: var(--white);
-    }
-
-    .login-form-inner {
-      width: 100%;
-      max-width: 360px;
-    }
-
-    .form-eyebrow {
-      display: inline-block;
-      margin-bottom: 10px;
-      color: var(--brand-600);
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-    }
-
-    .login-form-inner h2 {
-      font-size: 26px;
-      font-weight: 800;
-      color: var(--neutral-900);
-      letter-spacing: -.5px;
-      margin-bottom: 6px;
-    }
-
-    .login-form-inner .form-sub {
-      color: var(--neutral-500);
-      font-size: 14px;
-      margin-bottom: 36px;
-    }
-
-    /* ─── Form Elements ──────────────────────────────────────────── */
-    .field {
-      margin-bottom: 18px;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--neutral-700);
-    }
-
-    input[type="text"],
-    input[type="password"],
-    input[type="number"] {
-      width: 100%;
-      padding: 11px 14px;
-      font: inherit;
-      font-size: 14px;
-      color: var(--neutral-900);
-      background: var(--neutral-50);
-      border: 1.5px solid var(--neutral-200);
-      border-radius: var(--radius-md);
-      transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
-      outline: none;
-    }
-
-    input:focus {
-      background: var(--white);
-      border-color: var(--brand-600);
-      box-shadow: 0 0 0 3px rgba(70,30,150,.12);
-    }
-
-    input::placeholder {
-      color: var(--neutral-300);
-    }
-
-    .password-wrapper {
-      position: relative;
-    }
-
-    .password-wrapper input {
-      padding-right: 46px;
-    }
-
-    .btn-toggle-password {
-      position: absolute;
-      right: 8px; top: 50%;
-      transform: translateY(-50%);
-      padding: 6px;
-      background: transparent;
-      border: none;
-      border-radius: var(--radius-sm);
-      color: var(--neutral-500);
-      font-size: 15px;
-      cursor: pointer;
-      transition: color var(--transition);
-      box-shadow: none;
-    }
-
-    .btn-toggle-password:hover { color: var(--brand-600); }
-
-    /* ─── Buttons ────────────────────────────────────────────────── */
-    button {
-      cursor: pointer;
-      font: inherit;
-      font-size: 14px;
-      font-weight: 600;
-      border: none;
-      border-radius: var(--radius-md);
-      transition: all var(--transition);
-    }
-
-    .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 12px 24px;
-      background: var(--brand-600);
-      color: var(--white);
-      border-radius: var(--radius-md);
-      box-shadow: 0 4px 14px rgba(70,30,150,.28);
-    }
-
-    .btn-primary:hover {
-      background: var(--brand-700);
-      box-shadow: 0 6px 20px rgba(70,30,150,.34);
-      transform: translateY(-1px);
-    }
-
-    .btn-primary:active { transform: translateY(0); }
-
-    .btn-login {
-      width: 100%;
-      padding: 13px;
-      margin-top: 8px;
-      font-size: 15px;
-    }
-
-    .btn-secondary {
-      padding: 10px 18px;
-      background: var(--brand-50);
-      color: var(--brand-600);
-      border: 1.5px solid var(--brand-100);
-    }
-
-    .btn-secondary:hover {
-      background: var(--brand-100);
-      border-color: var(--brand-500);
-    }
-
-    .btn-danger {
-      padding: 10px 18px;
-      background: var(--pink-100);
-      color: #900057;
-      border: 1.5px solid #ffc8ea;
-    }
-
-    .btn-danger:hover {
-      background: #ffc8ea;
-      color: #700040;
-    }
-
-    .btn-logout {
-      padding: 7px 14px;
-      font-size: 13px;
-      background: rgba(255,255,255,.14);
-      color: var(--white);
-      border: 1px solid rgba(255,255,255,.28);
-      border-radius: var(--radius-sm);
-      backdrop-filter: blur(6px);
-    }
-
-    .btn-logout:hover {
-      background: rgba(255,255,255,.22);
-    }
-
-    /* ─── Login error / note ─────────────────────────────────────── */
-    .login-note {
-      margin-top: 16px;
-      text-align: center;
-      color: var(--neutral-500);
-      font-size: 12px;
-    }
-
-    #login-error {
-      display: none;
-      margin-top: 14px;
-      padding: 10px 14px;
-      border-radius: var(--radius-md);
-      background: var(--red-50);
-      border: 1px solid #ffd0cc;
-      color: var(--red-600);
-      font-size: 13px;
-      font-weight: 600;
-      text-align: center;
-    }
-
-    /* ════════════════════════════════════════════════════════════
-       APP SCREEN
-    ════════════════════════════════════════════════════════════ */
-    #app-screen {
-      display: none;
-      background: transparent;
-    }
-
-    /* ─── Top Nav Bar ────────────────────────────────────────────── */
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      padding: 14px 24px;
-      background: var(--brand-600);
-      border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-      box-shadow: 0 4px 16px rgba(70,30,150,.2);
-    }
-
-    .topbar-brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      color: var(--white);
-      font-size: 15px;
-      font-weight: 700;
-      letter-spacing: -.2px;
-    }
-
-    .topbar-brand-icon {
-      width: 32px; height: 32px;
-      background: rgba(255,255,255,.15);
-      border-radius: var(--radius-sm);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 16px;
-    }
-
-    .topbar-user {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-    }
-
-    .topbar-chips {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 4px 10px;
-      background: rgba(255,255,255,.13);
-      border: 1px solid rgba(255,255,255,.2);
-      border-radius: var(--radius-pill);
-      color: rgba(255,255,255,.88);
-      font-size: 12px;
-      font-weight: 600;
-    }
-
-    .chip-dot {
-      width: 6px; height: 6px;
-      background: #5dffc0;
-      border-radius: 50%;
-    }
-
-    /* ─── Page Content Area ──────────────────────────────────────── */
-    .app-body {
-      background: var(--white);
-      border-radius: 0 0 var(--radius-xl) var(--radius-xl);
-      box-shadow: var(--shadow-lg);
-      padding: 32px 28px 36px;
-    }
-
-    .page-header {
-      margin-bottom: 28px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid var(--neutral-200);
-    }
-
-    .page-header h1 {
-      font-size: clamp(22px, 3vw, 30px);
-      font-weight: 800;
-      color: var(--neutral-900);
-      letter-spacing: -.6px;
-      margin-bottom: 4px;
-    }
-
-    .page-header p {
-      color: var(--neutral-500);
-      font-size: 14px;
-      line-height: 1.55;
-    }
-
-    /* ─── Sections (Cards) ───────────────────────────────────────── */
-    .section {
-      margin-bottom: 20px;
-      border: 1px solid var(--neutral-200);
-      border-radius: var(--radius-lg);
-      background: var(--neutral-50);
-      overflow: hidden;
-      transition: box-shadow var(--transition);
-    }
-
-    .section:hover {
-      box-shadow: var(--shadow-sm);
-    }
-
-    .section-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 16px 20px;
-      background: var(--white);
-      border-bottom: 1px solid var(--neutral-200);
-    }
-
-    .section-icon {
-      width: 34px; height: 34px;
-      border-radius: var(--radius-sm);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 16px;
-      flex-shrink: 0;
-    }
-
-    .section-icon-blue { background: var(--brand-100); }
-    .section-icon-pink { background: var(--pink-100); }
-
-    .section-header-text h2 {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--neutral-900);
-      letter-spacing: -.1px;
-    }
-
-    .section-header-text p {
-      font-size: 12px;
-      color: var(--neutral-500);
-      margin-top: 1px;
-    }
-
-    .section-body {
-      padding: 20px;
-    }
-
-    /* ─── Row / inline inputs ────────────────────────────────────── */
-    .row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 14px;
-      align-items: flex-end;
-    }
-
-    .row input {
-      flex: 1;
-      min-width: 180px;
-      margin-bottom: 0;
-    }
-
-    /* ─── Table ──────────────────────────────────────────────────── */
-    .table-wrap {
-      margin-top: 16px;
-      border: 1px solid var(--neutral-200);
-      border-radius: var(--radius-md);
-      overflow: hidden;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-
-    thead th {
-      padding: 11px 14px;
-      background: var(--brand-50);
-      color: var(--brand-700);
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: .5px;
-      text-transform: uppercase;
-      text-align: left;
-      border-bottom: 1px solid var(--brand-100);
-    }
-
-    tbody td {
-      padding: 11px 14px;
-      color: var(--neutral-700);
-      border-bottom: 1px solid var(--neutral-200);
-    }
-
-    tbody tr:last-child td { border-bottom: none; }
-    tbody tr:hover { background: var(--brand-50); }
-    tbody tr.low { background: #fff7fb; }
-    tbody tr.low:hover { background: #ffeff7; }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 3px 10px;
-      border-radius: var(--radius-pill);
-      font-size: 11px;
-      font-weight: 700;
-    }
-
-    .badge-low {
-      background: var(--pink-100);
-      color: #8a0052;
-    }
-
-    .badge-ok {
-      background: var(--green-100);
-      color: var(--green-600);
-    }
-
-    /* ─── Status messages ────────────────────────────────────────── */
-    .status {
-      min-height: 20px;
-      margin-top: 12px;
-      color: var(--neutral-500);
-      font-size: 13px;
-      font-style: italic;
-    }
-
-    .status.success,
-    .status.error,
-    .status.warning {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 9px 14px;
-      border-radius: var(--radius-md);
-      font-style: normal;
-      font-weight: 600;
-      font-size: 13px;
-    }
-
-    .status.success {
-      color: var(--green-600);
-      background: var(--green-50);
-      border: 1px solid #b6edd9;
-    }
-
-    .status.error {
-      color: var(--red-600);
-      background: var(--red-50);
-      border: 1px solid #ffd0cc;
-    }
-
-    .status.warning {
-      color: #8a4100;
-      background: #fff8ef;
-      border: 1px solid var(--amber-100);
-    }
-
-    /* ─── Stock Breakdown ────────────────────────────────────────── */
-    .stock-breakdown {
-      display: none;
-      margin-top: 14px;
-      padding: 14px 16px;
-      background: var(--sky-100);
-      border: 1px solid #9adff4;
-      border-radius: var(--radius-md);
-      font-size: 13px;
-      color: var(--neutral-700);
-    }
-
-    .stock-breakdown p { margin: 0; }
-    .stock-breakdown span { color: var(--brand-600); font-weight: 700; }
-
-    .stock-breakdown-items {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px 24px;
-    }
-
-    .stock-item {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .stock-item-label { color: var(--neutral-500); }
-    .stock-item-val { color: var(--brand-600); font-weight: 700; }
-
-    /* ─── Alert Box ──────────────────────────────────────────────── */
-    .alert-box {
-      display: none;
-      margin-top: 14px;
-      padding: 14px 16px;
-      border-radius: var(--radius-md);
-      background: var(--pink-100);
-      border: 1px solid #ffa8d8;
-    }
-
-    .alert-box p { margin: 0; color: #800050; font-size: 13px; font-weight: 600; }
-
-    /* ─── Divider ────────────────────────────────────────────────── */
-    .divider {
-      height: 1px;
-      background: var(--neutral-200);
-      margin: 0 0 14px 0;
-    }
-
-    /* ─── Responsive ─────────────────────────────────────────────── */
-    @media (max-width: 820px) {
-      body { padding: 16px; align-items: flex-start; }
-
-      #login-screen { grid-template-columns: 1fr; min-height: auto; }
-      .login-hero { display: none; }
-      .login-form-panel { padding: 40px 28px; }
-
-      .topbar { border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding: 12px 16px; flex-wrap: wrap; }
-      .app-body { padding: 18px 16px 24px; }
-
-      .row { flex-direction: column; }
-      .row input, .row button { width: 100%; flex: none; min-width: 0; }
-
-      .table-wrap { overflow-x: auto; }
-      table { min-width: 620px; }
-    }
-
-    @media (max-width: 480px) {
-      .login-form-panel { padding: 32px 20px; }
-      .topbar-chips { display: none; }
-    }
-  </style>
-</head>
-<body>
-
-<div class="shell">
-
-  <!-- ════════════ LOGIN SCREEN ════════════ -->
-  <div id="login-screen">
-
-    <!-- Left hero -->
-    <div class="login-hero">
-      <div class="hero-pill">
-        <span></span> Live System — Demo Mode
-      </div>
-      <h1>Pharmacy Inventory Replenishment</h1>
-      <p>Manage stock levels, trigger replenishment alerts, and keep your pharmacy running smoothly — all in one place.</p>
-      <div class="hero-features">
-        <div class="hero-feature">
-          <div class="hero-feature-icon">📦</div>
-          Real-time stock visibility
-        </div>
-        <div class="hero-feature">
-          <div class="hero-feature-icon">🔔</div>
-          Automated replenishment alerts
-        </div>
-        <div class="hero-feature">
-          <div class="hero-feature-icon">🛡</div>
-          Role-based secure access
-        </div>
-      </div>
-    </div>
-
-    <!-- Right form -->
-    <div class="login-form-panel">
-      <div class="login-form-inner">
-        <span class="form-eyebrow">Secure Portal</span>
-        <h2>Welcome back</h2>
-        <p class="form-sub">Sign in to access your pharmacy workspace.</p>
-
-        <form id="login-form">
-          <div class="field">
-            <label for="login-username">Username</label>
-            <input
-              type="text"
-              id="login-username"
-              name="username"
-              placeholder="Enter your username"
-              autocomplete="username"
-              required
-            />
-          </div>
-
-          <div class="field">
-            <label for="login-password">Password</label>
-            <div class="password-wrapper">
-              <input
-                type="password"
-                id="login-password"
-                name="password"
-                placeholder="Enter your password"
-                autocomplete="current-password"
-                required
-              />
-              <button
-                class="btn-toggle-password"
-                type="button"
-                onclick="togglePassword()"
-                aria-label="Show or hide password"
-                title="Show or hide password"
-              >👁</button>
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width,initial-scale=1" />
+      <meta
+         name="description"
+         content="Pharmacy Inventory Replenishment portal"
+      />
+      <title>Pharmacy Inventory Replenishment</title>
+      <style>
+         :root {
+            --navy: #0b2239;
+            --blue: #176b87;
+            --teal: #0f8b8d;
+            --mint: #eaf8f5;
+            --bg: #f5f8fa;
+            --card: #fff;
+            --text: #142735;
+            --muted: #637582;
+            --line: #dbe5ea;
+            --success: #087f5b;
+            --success-bg: #e9f8f1;
+            --warn: #a45b00;
+            --warn-bg: #fff5df;
+            --error: #b42318;
+            --error-bg: #fff0ee;
+            --shadow: 0 12px 32px rgba(11, 34, 57, 0.09);
+            --radius: 18px;
+            --max: 1180px;
+         }
+         * {
+            box-sizing: border-box;
+         }
+         html {
+            scroll-behavior: smooth;
+         }
+         body {
+            margin: 0;
+            font-family:
+               Inter,
+               ui-sans-serif,
+               system-ui,
+               -apple-system,
+               "Segoe UI",
+               sans-serif;
+            color: var(--text);
+            background: var(--bg);
+            line-height: 1.55;
+         }
+         button,
+         input {
+            font: inherit;
+         }
+         a {
+            color: inherit;
+         }
+         .container {
+            width: min(var(--max), calc(100% - 40px));
+            margin: auto;
+         }
+         .nav {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--line);
+         }
+         .nav-in {
+            height: 72px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+         }
+         .brand {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            font-weight: 800;
+            color: var(--navy);
+            text-decoration: none;
+         }
+         .brand-mark {
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            display: grid;
+            place-items: center;
+            background: linear-gradient(135deg, var(--teal), var(--blue));
+            color: #fff;
+            box-shadow: 0 8px 20px rgba(15, 139, 141, 0.22);
+         }
+         .nav-links {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+         }
+         .nav-links a {
+            text-decoration: none;
+            color: var(--muted);
+            font-weight: 650;
+            font-size: 14px;
+         }
+         .hero {
+            background: radial-gradient(
+                  circle at 85% 20%,
+                  rgba(15, 139, 141, 0.16),
+                  transparent 30%
+               ),
+               linear-gradient(135deg, #f9fdfc, #edf7fa);
+            border-bottom: 1px solid var(--line);
+         }
+         .hero-in {
+            min-height: 520px;
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            align-items: center;
+            gap: 56px;
+            padding: 70px 0;
+         }
+         .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 11px;
+            border: 1px solid #b8ddd8;
+            background: #f2fcfa;
+            color: #087b72;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 750;
+         }
+         .hero h1 {
+            font-size: clamp(38px, 5vw, 64px);
+            letter-spacing: -0.045em;
+            line-height: 1.03;
+            color: var(--navy);
+            max-width: 760px;
+            margin: 18px 0;
+         }
+         .hero p {
+            font-size: 18px;
+            color: var(--muted);
+            max-width: 700px;
+            margin: 0 0 28px;
+         }
+         .actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+         }
+         .btn {
+            border: 0;
+            border-radius: 11px;
+            padding: 12px 17px;
+            font-weight: 750;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            text-decoration: none;
+            transition: 0.2s;
+            min-height: 46px;
+         }
+         .btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            filter: brightness(0.97);
+         }
+         .btn:disabled {
+            opacity: 0.58;
+            cursor: not-allowed;
+         }
+         .btn-primary {
+            background: var(--navy);
+            color: #fff;
+         }
+         .btn-secondary {
+            background: #fff;
+            color: var(--navy);
+            border: 1px solid var(--line);
+         }
+         .btn-teal {
+            background: var(--teal);
+            color: #fff;
+         }
+         .hero-card {
+            background: rgba(255, 255, 255, 0.84);
+            border: 1px solid rgba(185, 214, 220, 0.9);
+            box-shadow: var(--shadow);
+            border-radius: 24px;
+            padding: 26px;
+         }
+         .hero-card h3 {
+            margin: 0 0 8px;
+            color: var(--navy);
+         }
+         .hero-list {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0 0;
+            display: grid;
+            gap: 12px;
+         }
+         .hero-list li {
+            display: flex;
+            gap: 11px;
+            align-items: flex-start;
+            color: var(--muted);
+         }
+         .check {
+            flex: 0 0 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background: var(--success-bg);
+            color: var(--success);
+            font-weight: 900;
+         }
+         .section {
+            padding: 72px 0;
+         }
+         .section-head {
+            margin-bottom: 28px;
+         }
+         .section-head h2 {
+            font-size: 32px;
+            letter-spacing: -0.025em;
+            color: var(--navy);
+            margin: 0 0 7px;
+         }
+         .section-head p {
+            color: var(--muted);
+            margin: 0;
+         }
+         .kpis {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+         }
+         .kpi {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 16px rgba(11, 34, 57, 0.04);
+         }
+         .kpi-label {
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 700;
+         }
+         .kpi-value {
+            font-size: 28px;
+            font-weight: 850;
+            color: var(--navy);
+            margin-top: 5px;
+            overflow-wrap: anywhere;
+         }
+         .grid {
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 20px;
+            align-items: start;
+         }
+         .card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 25px;
+         }
+         .card-title {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            margin-bottom: 20px;
+         }
+         .icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: grid;
+            place-items: center;
+            background: var(--mint);
+            color: var(--teal);
+            font-size: 20px;
+         }
+         .card h3 {
+            margin: 0;
+            color: var(--navy);
+            font-size: 20px;
+         }
+         .card-sub {
+            color: var(--muted);
+            font-size: 14px;
+            margin: 3px 0 0;
+         }
+         .fields {
+            display: grid;
+            gap: 15px;
+         }
+         .field label {
+            display: block;
+            font-size: 13px;
+            font-weight: 750;
+            color: #405361;
+            margin: 0 0 7px;
+         }
+         .field input {
+            width: 100%;
+            height: 46px;
+            border: 1px solid #cbd9df;
+            border-radius: 10px;
+            padding: 0 13px;
+            color: var(--text);
+            background: #fff;
+         }
+         .field input:focus,
+         .btn:focus-visible,
+         a:focus-visible {
+            outline: 3px solid rgba(23, 107, 135, 0.24);
+            outline-offset: 2px;
+         }
+         .form-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 17px;
+         }
+         .status {
+            border-radius: 10px;
+            padding: 0;
+            min-height: 0;
+            margin-top: 14px;
+            font-size: 14px;
+         }
+         .status:not(:empty) {
+            padding: 10px 12px;
+            border: 1px solid var(--line);
+         }
+         .status.success {
+            color: var(--success);
+            background: var(--success-bg);
+            border-color: #bee5d4;
+         }
+         .status.warning {
+            color: var(--warn);
+            background: var(--warn-bg);
+            border-color: #f1d79d;
+         }
+         .status.error {
+            color: var(--error);
+            background: var(--error-bg);
+            border-color: #f2c7c2;
+         }
+         .table-wrap {
+            overflow: auto;
+            margin-top: 18px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            display: none;
+         }
+         table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 730px;
+         }
+         th {
+            background: #eef5f7;
+            color: #435964;
+            text-align: left;
+            padding: 12px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+         }
+         td {
+            padding: 13px 12px;
+            border-top: 1px solid var(--line);
+            font-size: 14px;
+         }
+         tr.low {
+            background: #fffaf0;
+         }
+         .badge {
+            display: inline-flex;
+            padding: 4px 9px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 800;
+         }
+         .badge-low {
+            background: var(--warn-bg);
+            color: var(--warn);
+         }
+         .badge-ok {
+            background: var(--success-bg);
+            color: var(--success);
+         }
+         .result-box {
+            display: none;
+            margin-top: 15px;
+            border-radius: 11px;
+            padding: 14px;
+            background: #f1f8fb;
+            border: 1px solid #c9e1e9;
+         }
+         .result-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+         }
+         .result-item span {
+            display: block;
+            color: var(--muted);
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 750;
+         }
+         .result-item strong {
+            display: block;
+            color: var(--navy);
+            font-size: 19px;
+         }
+         .low-alert {
+            display: none;
+            margin-top: 12px;
+            padding: 12px;
+            border-radius: 10px;
+            background: var(--warn-bg);
+            border: 1px solid #f1d79d;
+            color: var(--warn);
+            font-weight: 700;
+            font-size: 13px;
+         }
+         .features {
+            background: #fff;
+            border-top: 1px solid var(--line);
+            border-bottom: 1px solid var(--line);
+         }
+         .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+         }
+         .feature {
+            padding: 22px;
+            border: 1px solid var(--line);
+            border-radius: 15px;
+            background: #fbfdfd;
+         }
+         .feature h3 {
+            margin: 12px 0 7px;
+            color: var(--navy);
+         }
+         .feature p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 14px;
+         }
+         .footer {
+            background: var(--navy);
+            color: #d7e4ea;
+            padding: 34px 0;
+         }
+         .footer-in {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            align-items: center;
+         }
+         .footer small {
+            color: #a8bac4;
+         }
+         .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.45);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+         }
+         .btn-secondary .spinner {
+            border-color: #c5d5dc;
+            border-top-color: var(--navy);
+         }
+         @keyframes spin {
+            to {
+               transform: rotate(360deg);
+            }
+         }
+         .toast-region {
+            position: fixed;
+            z-index: 50;
+            right: 18px;
+            top: 88px;
+            display: grid;
+            gap: 10px;
+            width: min(360px, calc(100% - 36px));
+         }
+         .toast {
+            background: #fff;
+            border: 1px solid var(--line);
+            border-left: 4px solid var(--teal);
+            box-shadow: var(--shadow);
+            border-radius: 10px;
+            padding: 12px 14px;
+            font-size: 14px;
+         }
+         .toast.error {
+            border-left-color: var(--error);
+         }
+         .toast.warning {
+            border-left-color: var(--warn);
+         }
+
+         /* Authentication state and integrated login controls */
+         body.auth-pending main,
+         body.auth-pending footer,
+         body.auth-pending .nav-links {
+            display: none !important;
+         }
+
+         body.authenticated #login-form {
+            display: none;
+         }
+
+         body:not(.authenticated) #hero-actions {
+            display: none;
+         }
+
+         .login-form {
+            max-width: 470px;
+            margin-top: 24px;
+         }
+
+         .login-form h2 {
+            margin: 0 0 5px;
+            color: var(--navy);
+            font-size: 24px;
+         }
+
+         .login-form .card-sub {
+            margin-bottom: 15px;
+         }
+
+         .login-form .fields {
+            margin-top: 14px;
+         }
+
+         .password-wrap {
+            position: relative;
+         }
+
+         .password-wrap input {
+            padding-right: 82px;
+         }
+
+         .password-toggle {
+            position: absolute;
+            top: 50%;
+            right: 8px;
+            transform: translateY(-50%);
+            border: 0;
+            border-radius: 8px;
+            padding: 7px 9px;
+            background: transparent;
+            color: var(--blue);
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+         }
+
+         .password-toggle:hover {
+            background: var(--mint);
+         }
+
+         .password-toggle:focus-visible {
+            outline: 3px solid rgba(23, 107, 135, 0.24);
+            outline-offset: 1px;
+         }
+
+         #login-error {
+            margin-top: 12px;
+         }
+
+         #login-error[hidden] {
+            display: none !important;
+         }
+
+         .user-info {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            flex-wrap: wrap;
+         }
+
+         .user-chip {
+            display: inline-flex;
+            align-items: center;
+            min-height: 34px;
+            padding: 6px 10px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            background: #fff;
+            color: var(--navy);
+            font-size: 12px;
+            font-weight: 800;
+            white-space: nowrap;
+         }
+
+         .user-chip.muted {
+            color: var(--muted);
+            font-weight: 750;
+            background: #f7fafb;
+         }
+
+         .sign-out {
+            min-height: 36px;
+            padding: 8px 12px;
+            font-size: 12px;
+            white-space: nowrap;
+         }
+
+         .auth-locked {
+            background: #f7fafb !important;
+            color: var(--muted) !important;
+            cursor: not-allowed !important;
+         }
+
+         @media (max-width: 880px) {
+            .user-info {
+               gap: 6px;
+            }
+
+            .user-chip {
+               padding: 5px 8px;
+               font-size: 11px;
+            }
+
+            .sign-out {
+               min-height: 34px;
+               padding: 7px 10px;
+               font-size: 11px;
+            }
+         }
+
+         @media (max-width: 560px) {
+            .nav-in {
+               height: auto;
+               min-height: 72px;
+               padding: 10px 0;
+            }
+
+            .nav-links {
+               flex-wrap: wrap;
+               row-gap: 6px;
+            }
+
+            .brand {
+               flex: 1 1 auto;
+               min-width: 0;
+            }
+
+            .brand > span:last-child {
+               overflow: hidden;
+               text-overflow: ellipsis;
+               white-space: nowrap;
+            }
+
+            .user-info {
+               width: 100%;
+            }
+
+            .login-form {
+               margin-top: 20px;
+            }
+         }
+         @media (max-width: 880px) {
+            .hero-in,
+            .grid {
+               grid-template-columns: 1fr;
+            }
+            .hero-in {
+               padding: 54px 0;
+               min-height: auto;
+            }
+            .hero-card {
+               display: none;
+            }
+            .kpis {
+               grid-template-columns: repeat(2, 1fr);
+            }
+            .features-grid {
+               grid-template-columns: 1fr;
+            }
+            .nav-links a:not(.nav-cta) {
+               display: none;
+            }
+         }
+         @media (max-width: 560px) {
+            .container {
+               width: min(100% - 24px, var(--max));
+            }
+            .section {
+               padding: 52px 0;
+            }
+            .kpis {
+               grid-template-columns: 1fr 1fr;
+            }
+            .kpi {
+               padding: 15px;
+            }
+            .kpi-value {
+               font-size: 22px;
+            }
+            .form-actions .btn {
+               width: 100%;
+            }
+            .result-grid {
+               grid-template-columns: 1fr;
+            }
+            .footer-in {
+               align-items: flex-start;
+               flex-direction: column;
+            }
+         }
+      </style>
+   </head>
+   <body class="auth-pending">
+      <div
+         id="toasts"
+         class="toast-region"
+         role="status"
+         aria-live="polite"
+         aria-atomic="true"
+      ></div>
+      <nav class="nav" aria-label="Primary">
+         <div class="container nav-in">
+            <a class="brand" href="#top"
+               ><span class="brand-mark" aria-hidden="true">+</span
+               ><span>Pharmacy Inventory</span></a
+            >
+            <div class="nav-links">
+               <a href="#tools">Inventory tools</a
+               ><a href="#features">Features</a
+               ><a class="btn btn-primary nav-cta" href="#tools"
+                  >Open dashboard</a
+               >
+               <div id="user-info" class="user-info" aria-label="Authenticated user">
+                  <span id="user-display-name" class="user-chip"></span>
+                  <span id="user-pharmacy" class="user-chip muted"></span>
+                  <span id="user-role" class="user-chip muted"></span>
+                  <button
+                     id="sign-out-btn"
+                     class="btn btn-secondary sign-out"
+                     type="button"
+                     onclick="signOut()"
+                  >
+                     Sign Out
+                  </button>
+               </div>
             </div>
-          </div>
+         </div>
+      </nav>
+      <header id="top" class="hero">
+         <div class="container hero-in">
+            <div>
+               <span class="eyebrow">● Inventory operations portal</span>
+               <h1>Smarter pharmacy stock, without the operational clutter.</h1>
+               <p>
+                  View live inventory, identify medicines that need
+                  replenishment, and record dispensing from one focused
+                  workspace connected directly to your existing FastAPI
+                  endpoints.
+               </p>
+               <form id="login-form" class="login-form" novalidate>
+                  <h2>Sign in to your pharmacy workspace</h2>
+                  <p class="card-sub">
+                     Use your assigned pharmacy account to access inventory and
+                     replenishment tools.
+                  </p>
 
-          <button class="btn-primary btn-login" type="submit">🔐 Sign In</button>
-          <p class="login-note">Authorized pharmacy personnel only</p>
-          <p id="login-error" role="alert"></p>
-        </form>
-      </div>
-    </div>
-  </div>
+                  <div class="fields">
+                     <div class="field">
+                        <label for="login-username">Username</label>
+                        <input
+                           id="login-username"
+                           name="username"
+                           type="text"
+                           autocomplete="username"
+                           autocapitalize="none"
+                           spellcheck="false"
+                           placeholder="Enter your username"
+                           required
+                        />
+                     </div>
 
-  <!-- ════════════ APP SCREEN ════════════ -->
-  <div id="app-screen">
+                     <div class="field">
+                        <label for="login-password">Password</label>
+                        <div class="password-wrap">
+                           <input
+                              id="login-password"
+                              name="password"
+                              type="password"
+                              autocomplete="current-password"
+                              placeholder="Enter your password"
+                              required
+                           />
+                           <button
+                              id="password-toggle"
+                              class="password-toggle"
+                              type="button"
+                              onclick="togglePassword()"
+                              aria-controls="login-password"
+                              aria-label="Show password"
+                           >
+                              Show
+                           </button>
+                        </div>
+                     </div>
+                  </div>
 
-    <!-- Top bar -->
-    <div class="topbar">
-      <div class="topbar-brand">
-        <div class="topbar-brand-icon">💊</div>
-        Pharmacy Replenishment
-      </div>
-      <div class="topbar-user">
-        <div class="topbar-chips">
-          <div class="chip"><div class="chip-dot"></div><span id="user-name"></span></div>
-          <div class="chip">🏥 <span id="user-pharmacy"></span></div>
-          <div class="chip">🛡 <span id="user-role"></span></div>
-        </div>
-        <button class="btn-logout" onclick="signOut()">Sign Out</button>
-      </div>
-    </div>
+                  <div class="form-actions">
+                     <button id="login-btn" class="btn btn-primary" type="submit">
+                        Sign in
+                     </button>
+                  </div>
 
-    <!-- App body -->
-    <div class="app-body">
+                  <div
+                     id="login-error"
+                     class="status error"
+                     role="alert"
+                     aria-live="assertive"
+                     hidden
+                  ></div>
+               </form>
 
-      <div class="page-header">
-        <h1>Inventory Dashboard</h1>
-        <p>Manage medicine inventory, check replenishment needs, and update stock levels.</p>
-      </div>
-
-      <!-- ── Section 1: View / Replenishment ── -->
-      <div class="section">
-        <div class="section-header">
-          <div class="section-icon section-icon-blue">📋</div>
-          <div class="section-header-text">
-            <h2>View Inventory &amp; Replenishment</h2>
-            <p>Fetch current stock or identify medicines that need restocking</p>
-          </div>
-        </div>
-        <div class="section-body">
-          <div class="row">
-            <input
-              type="text"
-              id="pharmacyId"
-              placeholder="Pharmacy ID (e.g. PH001)"
-            />
-            <button class="btn-primary" onclick="viewInventory()">View All Inventory</button>
-            <button class="btn-secondary" onclick="checkReplenishment()">Check Replenishment</button>
-          </div>
-
-          <div class="status" id="view-status"></div>
-
-          <div class="table-wrap" id="inventory-table-wrap" style="display:none;">
-            <table id="inventory-table">
-              <thead>
-                <tr>
-                  <th>Medicine Code</th>
-                  <th>Medicine Name</th>
-                  <th>Current Stock</th>
-                  <th>Reorder Level</th>
-                  <th>Qty Needed</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody id="inventory-body"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── Section 2: Dispense Stock ── -->
-      <div class="section">
-        <div class="section-header">
-          <div class="section-icon section-icon-pink">💉</div>
-          <div class="section-header-text">
-            <h2>Dispense Medicine / Update Stock Used</h2>
-            <p>Deduct dispensed quantities — low stock triggers an automatic Service Bus alert</p>
-          </div>
-        </div>
-        <div class="section-body">
-          <div class="row">
-            <input
-              type="text"
-              id="update-pharmacyId"
-              placeholder="Pharmacy ID (e.g. PH001)"
-            />
-            <input
-              type="text"
-              id="update-medicineCode"
-              placeholder="Medicine Code (e.g. MED002)"
-            />
-            <input
-              type="number"
-              id="update-stock"
-              placeholder="Quantity Dispensed / Used"
-              min="1"
-            />
-            <button class="btn-danger" onclick="updateStock()">Dispense Stock</button>
-          </div>
-
-          <div class="status" id="update-status"></div>
-
-          <div class="stock-breakdown" id="stock-breakdown">
-            <div class="stock-breakdown-items">
-              <div class="stock-item">
-                <span class="stock-item-label">📦 Previous Stock:</span>
-                <span class="stock-item-val" id="prev-stock">—</span>
-                <span class="stock-item-label">units</span>
-              </div>
-              <div class="stock-item">
-                <span class="stock-item-label">💉 Dispensed:</span>
-                <span class="stock-item-val" id="dispensed-qty">—</span>
-                <span class="stock-item-label">units</span>
-              </div>
-              <div class="stock-item">
-                <span class="stock-item-label">✅ Remaining:</span>
-                <span class="stock-item-val" id="new-stock">—</span>
-                <span class="stock-item-label">units</span>
-              </div>
+               <div id="hero-actions" class="actions">
+                  <a class="btn btn-primary" href="#tools">Manage inventory</a
+                  ><a class="btn btn-secondary" href="#features"
+                     >Explore features</a
+                  >
+               </div>
             </div>
-          </div>
+            <aside class="hero-card" aria-label="Portal capabilities">
+               <h3>Built for day-to-day pharmacy operations</h3>
+               <p class="card-sub">
+                  A clear workflow around the API capabilities you already use.
+               </p>
+               <ul class="hero-list">
+                  <li>
+                     <span class="check">✓</span
+                     ><span
+                        >Review current medicines and stock levels by
+                        pharmacy.</span
+                     >
+                  </li>
+                  <li>
+                     <span class="check">✓</span
+                     ><span
+                        >Check replenishment requirements and surface low-stock
+                        items.</span
+                     >
+                  </li>
+                  <li>
+                     <span class="check">✓</span
+                     ><span
+                        >Record dispensed quantities and see the resulting stock
+                        immediately.</span
+                     >
+                  </li>
+               </ul>
+            </aside>
+         </div>
+      </header>
+      <main>
+         <section id="tools" class="section">
+            <div class="container">
+               <div class="section-head">
+                  <h2>Inventory dashboard</h2>
+                  <p>
+                     KPI values below are updated only from successful API
+                     responses.
+                  </p>
+               </div>
+               <div class="kpis" aria-label="Inventory summary">
+                  <div class="kpi">
+                     <div class="kpi-label">Total medicines</div>
+                     <div id="kpi-total" class="kpi-value">—</div>
+                  </div>
+                  <div class="kpi">
+                     <div class="kpi-label">Healthy stock</div>
+                     <div id="kpi-healthy" class="kpi-value">—</div>
+                  </div>
+                  <div class="kpi">
+                     <div class="kpi-label">Low stock</div>
+                     <div id="kpi-low" class="kpi-value">—</div>
+                  </div>
+                  <div class="kpi">
+                     <div class="kpi-label">Active pharmacy</div>
+                     <div id="kpi-pharmacy" class="kpi-value">—</div>
+                  </div>
+               </div>
+               <div class="grid">
+                  <section class="card" aria-labelledby="inventory-title">
+                     <div class="card-title">
+                        <div class="icon" aria-hidden="true">▦</div>
+                        <div>
+                           <h3 id="inventory-title">
+                              Inventory & replenishment
+                           </h3>
+                           <p class="card-sub">
+                              Load the full inventory or check which medicines
+                              need replenishment.
+                           </p>
+                        </div>
+                     </div>
+                     <div class="field">
+                        <label for="pharmacyId">Pharmacy ID</label
+                        ><input
+                           id="pharmacyId"
+                           type="text"
+                           autocomplete="off"
+                           placeholder="e.g. PH001"
+                           readonly
+                           aria-readonly="true"
+                           class="auth-locked"
+                        />
+                     </div>
+                     <div class="form-actions">
+                        <button
+                           id="view-btn"
+                           class="btn btn-primary"
+                           type="button"
+                           onclick="getInventory()"
+                        >
+                           View all inventory</button
+                        ><button
+                           id="replenish-btn"
+                           class="btn btn-secondary"
+                           type="button"
+                           onclick="checkReplenishment()"
+                        >
+                           Check replenishment
+                        </button>
+                     </div>
+                     <div
+                        id="view-status"
+                        class="status"
+                        role="status"
+                        aria-live="polite"
+                     ></div>
+                     <div id="table-wrap" class="table-wrap">
+                        <table id="result-table">
+                           <thead>
+                              <tr>
+                                 <th>Medicine code</th>
+                                 <th>Medicine name</th>
+                                 <th>Current stock</th>
+                                 <th>Reorder level</th>
+                                 <th>Qty needed</th>
+                                 <th>Status</th>
+                              </tr>
+                           </thead>
+                           <tbody id="result-body"></tbody>
+                        </table>
+                     </div>
+                  </section>
+                  <section class="card" aria-labelledby="dispense-title">
+                     <div class="card-title">
+                        <div class="icon" aria-hidden="true">−</div>
+                        <div>
+                           <h3 id="dispense-title">Dispense medicine</h3>
+                           <p class="card-sub">
+                              Record stock used. The backend calculates the new
+                              stock balance.
+                           </p>
+                        </div>
+                     </div>
+                     <div class="fields">
+                        <div class="field">
+                           <label for="update-pharmacyId">Pharmacy ID</label
+                           ><input
+                              id="update-pharmacyId"
+                              type="text"
+                              autocomplete="off"
+                              placeholder="e.g. PH001"
+                              readonly
+                              aria-readonly="true"
+                              class="auth-locked"
+                           />
+                        </div>
+                        <div class="field">
+                           <label for="update-medicineCode">Medicine code</label
+                           ><input
+                              id="update-medicineCode"
+                              type="text"
+                              autocomplete="off"
+                              placeholder="e.g. MED002"
+                           />
+                        </div>
+                        <div class="field">
+                           <label for="update-stock"
+                              >Quantity dispensed / used</label
+                           ><input
+                              id="update-stock"
+                              type="number"
+                              min="1"
+                              inputmode="numeric"
+                              placeholder="e.g. 5"
+                           />
+                        </div>
+                     </div>
+                     <div class="form-actions">
+                        <button
+                           id="dispense-btn"
+                           class="btn btn-teal"
+                           type="button"
+                           onclick="updateStock()"
+                        >
+                           Dispense stock
+                        </button>
+                     </div>
+                     <div
+                        id="update-status"
+                        class="status"
+                        role="status"
+                        aria-live="polite"
+                     ></div>
+                     <div id="stock-breakdown" class="result-box">
+                        <div class="result-grid">
+                           <div class="result-item">
+                              <span>Previous stock</span
+                              ><strong id="prev-stock">—</strong>
+                           </div>
+                           <div class="result-item">
+                              <span>Dispensed</span
+                              ><strong id="dispensed-qty">—</strong>
+                           </div>
+                           <div class="result-item">
+                              <span>Remaining</span
+                              ><strong id="new-stock">—</strong>
+                           </div>
+                        </div>
+                     </div>
+                     <div id="low-stock-alert" class="low-alert" role="alert">
+                        Low stock threshold reached. A replenishment alert was
+                        triggered by the backend.
+                     </div>
+                  </section>
+               </div>
+            </div>
+         </section>
+         <section id="features" class="section features">
+            <div class="container">
+               <div class="section-head">
+                  <h2>Purpose-built for a cleaner workflow</h2>
+                  <p>
+                     A lightweight interface with no client-side dependencies or
+                     build step.
+                  </p>
+               </div>
+               <div class="features-grid">
+                  <article class="feature">
+                     <div class="icon">↻</div>
+                     <h3>Live API-driven view</h3>
+                     <p>
+                        Inventory, replenishment results, stock outcomes and KPI
+                        values reflect backend responses rather than placeholder
+                        data.
+                     </p>
+                  </article>
+                  <article class="feature">
+                     <div class="icon">!</div>
+                     <h3>Clear stock signals</h3>
+                     <p>
+                        Healthy and low-stock states are visually distinct, with
+                        inline status feedback for every operation.
+                     </p>
+                  </article>
+                  <article class="feature">
+                     <div class="icon">✓</div>
+                     <h3>Accessible interactions</h3>
+                     <p>
+                        Labeled inputs, keyboard-visible focus, live status
+                        regions and responsive layouts support a wider range of
+                        users and devices.
+                     </p>
+                  </article>
+               </div>
+            </div>
+         </section>
+      </main>
+      <footer class="footer">
+         <div class="container footer-in">
+            <div class="brand" style="color: white">
+               <span class="brand-mark">+</span><span>Pharmacy Inventory</span>
+            </div>
+            <small>Inventory replenishment portal · FastAPI frontend</small>
+         </div>
+      </footer>
+      <script>
+         const $ = (id) => document.getElementById(id);
+         function setStatus(id, msg, type = "") {
+            const el = $(id);
+            el.textContent = msg;
+            el.className = `status ${type}`.trim();
+         }
+          const USERS = {
+             admin: {
+                password: "Admin@123",
+                pharmacy: "PH001",
+                role: "Administrator",
+                displayName: "Pharmacy Admin",
+             },
+             pharmacist: {
+                password: "Pharma@123",
+                pharmacy: "PH002",
+                role: "Pharmacist",
+                displayName: "Pharmacist User",
+             },
+          };
 
-          <div class="alert-box" id="low-stock-alert">
-            <p>⚠️ Low Stock Alert! This medicine has dropped below its reorder level. A replenishment request has been automatically sent to the Service Bus queue.</p>
-          </div>
-        </div>
-      </div>
+          const SESSION_KEY = "pharmacyAuthenticatedUser";
 
-    </div><!-- /app-body -->
-  </div><!-- /app-screen -->
+          /*
+           * This frontend-only authentication is suitable for demos/basic projects.
+           * It is NOT sufficient for protecting production credentials or sensitive data.
+           * Production authentication must be handled by a backend using secure password
+           * hashing, sessions/tokens, HTTPS, and server-side authorization.
+           */
 
-</div><!-- /shell -->
+          function getStoredUser() {
+             try {
+                const username = sessionStorage.getItem(SESSION_KEY);
+                if (!username || !USERS[username]) return null;
 
-<script>
-    // ============================================================
-    // BASIC DEMO AUTHENTICATION
-    // Frontend-only authentication for a basic project/demo.
-    // Do not use this approach to protect production or sensitive data.
-    // ============================================================
-    const USERS = Object.freeze({
-      admin: {
-        password: "Admin@123",
-        pharmacy: "PH001",
-        role: "Administrator",
-        displayName: "Pharmacy Admin"
-      },
-      pharmacist: {
-        password: "Pharma@123",
-        pharmacy: "PH002",
-        role: "Pharmacist",
-        displayName: "Pharmacist User"
-      }
-    });
-
-    const SESSION_KEY = "pharmacyAuthenticatedUser";
-
-    document.addEventListener("DOMContentLoaded", function () {
-      document.getElementById("login-form").addEventListener("submit", function (event) {
-        event.preventDefault();
-        login();
-      });
-
-      const user = getStoredUser();
-      if (user && USERS[user.username]) {
-        showApp(user);
-      } else {
-        sessionStorage.removeItem(SESSION_KEY);
-        showLoginScreen();
-      }
-    });
-
-    function getStoredUser() {
-      try {
-        return JSON.parse(sessionStorage.getItem(SESSION_KEY));
-      } catch (error) {
-        sessionStorage.removeItem(SESSION_KEY);
-        return null;
-      }
-    }
-
-    function showLoginScreen() {
-      document.getElementById("login-screen").style.display = "grid";
-      document.getElementById("app-screen").style.display = "none";
-      document.getElementById("login-username").focus();
-    }
-
-    function login() {
-      const usernameInput = document.getElementById("login-username");
-      const passwordInput = document.getElementById("login-password");
-      const errorElement = document.getElementById("login-error");
-
-      const username = usernameInput.value.trim().toLowerCase();
-      const password = passwordInput.value;
-      const user = USERS[username];
-
-      errorElement.style.display = "none";
-      errorElement.textContent = "";
-
-      if (!user || user.password !== password) {
-        errorElement.textContent = "Invalid username or password.";
-        errorElement.style.display = "block";
-        passwordInput.value = "";
-        passwordInput.focus();
-        return;
-      }
-
-      const sessionUser = {
-        username,
-        displayName: user.displayName,
-        pharmacy: user.pharmacy,
-        role: user.role
-      };
-
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify(sessionUser));
-      passwordInput.value = "";
-      showApp(sessionUser);
-    }
-
-    function signOut() {
-      sessionStorage.removeItem(SESSION_KEY);
-      document.getElementById("login-form").reset();
-      clearAppState();
-      showLoginScreen();
-    }
-
-    function togglePassword() {
-      const passwordInput = document.getElementById("login-password");
-      passwordInput.type = passwordInput.type === "password" ? "text" : "password";
-    }
-
-    function showApp(user) {
-      document.getElementById("login-screen").style.display = "none";
-      document.getElementById("app-screen").style.display = "block";
-      document.getElementById("user-name").textContent = user.displayName || user.username;
-      document.getElementById("user-pharmacy").textContent = user.pharmacy;
-      document.getElementById("user-role").textContent = user.role;
-      document.getElementById("pharmacyId").value = user.pharmacy;
-      document.getElementById("update-pharmacyId").value = user.pharmacy;
-    }
-
-    function clearAppState() {
-      document.getElementById("user-name").textContent = "";
-      document.getElementById("user-pharmacy").textContent = "";
-      document.getElementById("user-role").textContent = "";
-      document.getElementById("pharmacyId").value = "";
-      document.getElementById("update-pharmacyId").value = "";
-      document.getElementById("update-medicineCode").value = "";
-      document.getElementById("update-stock").value = "";
-      document.getElementById("view-status").textContent = "";
-      document.getElementById("view-status").className = "status";
-      document.getElementById("update-status").textContent = "";
-      document.getElementById("update-status").className = "status";
-      hideTable();
-      document.getElementById("low-stock-alert").style.display = "none";
-      document.getElementById("stock-breakdown").style.display = "none";
-    }
-
-    function setStatus(id, message, type) {
-      const el = document.getElementById(id);
-      el.textContent = message;
-      el.className = "status" + (type ? " " + type : "");
-    }
-
-    function hideTable() {
-      document.getElementById("inventory-table-wrap").style.display = "none";
-      document.getElementById("inventory-body").innerHTML = "";
-    }
-
-    function renderTable(rows) {
-      const tbody = document.getElementById("inventory-body");
-      tbody.innerHTML = "";
-
-      if (!rows || rows.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--neutral-500);padding:20px;">No records found.</td></tr>`;
-        document.getElementById("inventory-table-wrap").style.display = "block";
-        return;
-      }
-
-      rows.forEach(item => {
-        const needsReplenishment = item.needsReplenishment ||
-          (item.currentStock !== undefined && item.reorderLevel !== undefined && item.currentStock <= item.reorderLevel);
-        const qtyNeeded = needsReplenishment && item.reorderLevel
-          ? Math.max(0, (item.reorderLevel * 2) - (item.currentStock || 0))
-          : (item.quantityNeeded || 0);
-
-        const row = document.createElement("tr");
-        if (needsReplenishment) row.classList.add("low");
-
-        row.innerHTML = `
-          <td><strong>${item.medicineCode || "—"}</strong></td>
-          <td>${item.medicineName || "—"}</td>
-          <td>${item.currentStock !== undefined ? item.currentStock : "—"}</td>
-          <td>${item.reorderLevel !== undefined ? item.reorderLevel : "—"}</td>
-          <td>${qtyNeeded > 0 ? qtyNeeded : "—"}</td>
-          <td>
-            ${needsReplenishment
-              ? `<span class="badge badge-low">⚠ Low Stock</span>`
-              : `<span class="badge badge-ok">✓ OK</span>`}
-          </td>`;
-        tbody.appendChild(row);
-      });
-
-      document.getElementById("inventory-table-wrap").style.display = "block";
-    }
-
-    async function getErrorMessage(response) {
-      try {
-        const data = await response.json();
-        return data.message || data.error || `HTTP ${response.status}`;
-      } catch {
-        return `HTTP ${response.status}`;
-      }
-    }
-
-    // ============================================================
-    // SECTION 1: View All Inventory
-    // ============================================================
-    async function viewInventory() {
-      const pharmacyId = document.getElementById("pharmacyId").value.trim();
-
-      if (!pharmacyId) {
-        alert("Please enter a Pharmacy ID");
-        return;
-      }
-
-      setStatus("view-status", "Fetching inventory...", "");
-      hideTable();
-
-      try {
-        const res = await fetch(`/inventory/${encodeURIComponent(pharmacyId)}`);
-
-        if (!res.ok) {
-          const message = await getErrorMessage(res);
-          setStatus("view-status", `❌ Error: ${message}`, "error");
-          return;
-        }
-
-        const data = await res.json();
-        const rows = Array.isArray(data) ? data : [];
-        renderTable(rows);
-        setStatus(
-          "view-status",
-          `✅ Showing all inventory for ${pharmacyId} — ${rows.length} medicine(s) found.`,
-          "success"
-        );
-      } catch (error) {
-        console.error("Inventory request failed:", error);
-        setStatus("view-status", "❌ Network error fetching inventory.", "error");
-      }
-    }
-
-    // ============================================================
-    // SECTION 1: Check Replenishment
-    // ============================================================
-    async function checkReplenishment() {
-      const pharmacyId = document.getElementById("pharmacyId").value.trim();
-
-      if (!pharmacyId) {
-        alert("Please enter a Pharmacy ID");
-        return;
-      }
-
-      setStatus("view-status", "Checking replenishment needs...", "");
-      hideTable();
-
-      try {
-        const res = await fetch("/replenishments", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ pharmacyId })
-        });
-
-        if (!res.ok) {
-          const message = await getErrorMessage(res);
-          setStatus("view-status", `❌ Error: ${message}`, "error");
-          return;
-        }
-
-        const data = await res.json();
-        const items = Array.isArray(data.items) ? data.items : [];
-
-        if (items.length === 0) {
-          setStatus("view-status", "✅ All medicines are sufficiently stocked!", "success");
-          return;
-        }
-
-        renderTable(items.map(item => ({ ...item, needsReplenishment: true })));
-        setStatus(
-          "view-status",
-          `⚠️ ${items.length} medicine(s) need replenishment — Request ID: ${data.replenishmentId || "N/A"}`,
-          "warning"
-        );
-      } catch (error) {
-        console.error("Replenishment request failed:", error);
-        setStatus("view-status", "❌ Network error checking replenishment.", "error");
-      }
-    }
-
-    // ============================================================
-    // SECTION 2: Dispense Stock
-    // ============================================================
-    async function updateStock() {
-      const pharmacyId = document.getElementById("update-pharmacyId").value.trim();
-      const medicineCode = document.getElementById("update-medicineCode").value.trim();
-      const stockUsedValue = document.getElementById("update-stock").value.trim();
-      const stockUsed = Number.parseInt(stockUsedValue, 10);
-
-      if (!pharmacyId) {
-        alert("Please enter a Pharmacy ID");
-        return;
-      }
-
-      if (!medicineCode) {
-        alert("Please enter a Medicine Code");
-        return;
-      }
-
-      if (!Number.isInteger(stockUsed) || stockUsed <= 0) {
-        alert("Quantity must be a whole number greater than 0");
-        return;
-      }
-
-      setStatus("update-status", "Processing dispensing...", "");
-      document.getElementById("low-stock-alert").style.display = "none";
-      document.getElementById("stock-breakdown").style.display = "none";
-
-      try {
-        const res = await fetch(
-          `/inventory/${encodeURIComponent(pharmacyId)}/${encodeURIComponent(medicineCode)}`,
-          {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ stockUsed })
+                const account = USERS[username];
+                return {
+                   username,
+                   pharmacy: account.pharmacy,
+                   role: account.role,
+                   displayName: account.displayName,
+                };
+             } catch {
+                return null;
+             }
           }
-        );
 
-        if (!res.ok) {
-          const message = await getErrorMessage(res);
-          setStatus("update-status", `❌ Error: ${message}`, "error");
-          return;
-        }
+          function clearDashboardState() {
+             $("kpi-total").textContent = "—";
+             $("kpi-healthy").textContent = "—";
+             $("kpi-low").textContent = "—";
+             $("kpi-pharmacy").textContent = "—";
 
-        const result = await res.json();
+             $("pharmacyId").value = "";
+             $("update-pharmacyId").value = "";
+             $("update-medicineCode").value = "";
+             $("update-stock").value = "";
 
-        document.getElementById("prev-stock").textContent = result.previousStock ?? "—";
-        document.getElementById("dispensed-qty").textContent = stockUsed;
-        document.getElementById("new-stock").textContent = result.newStock ?? "—";
-        document.getElementById("stock-breakdown").style.display = "block";
+             hideTable();
+             $("stock-breakdown").style.display = "none";
+             $("low-stock-alert").style.display = "none";
+             setStatus("view-status", "");
+             setStatus("update-status", "");
 
-        if (result.replenishmentTriggered) {
-          document.getElementById("low-stock-alert").style.display = "block";
-          setStatus("update-status", `⚠️ Stock updated — replenishment alert triggered!`, "warning");
-        } else {
-          setStatus("update-status", `✅ Stock successfully updated for ${medicineCode}.`, "success");
-        }
-      } catch (error) {
-        console.error("Stock update failed:", error);
-        setStatus("update-status", "❌ Network error updating stock.", "error");
-      }
-    }
-</script>
-</body>
+             $("prev-stock").textContent = "—";
+             $("dispensed-qty").textContent = "—";
+             $("new-stock").textContent = "—";
+             $("toasts").replaceChildren();
+          }
+
+          function clearLoginError() {
+             const el = $("login-error");
+             el.textContent = "";
+             el.hidden = true;
+             el.className = "status error";
+          }
+
+          function setLoginError(message) {
+             const el = $("login-error");
+             el.textContent = message;
+             el.hidden = false;
+             el.className = "status error";
+          }
+
+          function applyUserSession(user) {
+             $("user-display-name").textContent = user.displayName;
+             $("user-pharmacy").textContent = user.pharmacy;
+             $("user-role").textContent = user.role;
+
+             $("pharmacyId").value = user.pharmacy;
+             $("update-pharmacyId").value = user.pharmacy;
+          }
+
+          function showLoginScreen() {
+             document.body.classList.add("auth-pending");
+             document.body.classList.remove("authenticated");
+
+             $("login-form").reset();
+             clearLoginError();
+             clearDashboardState();
+
+             $("user-display-name").textContent = "";
+             $("user-pharmacy").textContent = "";
+             $("user-role").textContent = "";
+
+             $("password-toggle").textContent = "Show";
+             $("password-toggle").setAttribute("aria-label", "Show password");
+             $("login-password").type = "password";
+
+             requestAnimationFrame(() => $("login-username").focus());
+          }
+
+          function showApp() {
+             const user = getStoredUser();
+             if (!user) {
+                showLoginScreen();
+                return;
+             }
+
+             applyUserSession(user);
+             clearLoginError();
+
+             document.body.classList.add("authenticated");
+             document.body.classList.remove("auth-pending");
+          }
+
+          function login(event) {
+             event.preventDefault();
+             clearLoginError();
+
+             const username = $("login-username").value.trim().toLowerCase();
+             const password = $("login-password").value;
+             const account = USERS[username];
+
+             if (!account || account.password !== password) {
+                setLoginError("Invalid username or password. Please try again.");
+                $("login-password").value = "";
+                $("login-password").focus();
+                return;
+             }
+
+             try {
+                sessionStorage.setItem(SESSION_KEY, username);
+             } catch {
+                setLoginError(
+                   "Unable to create a login session. Check your browser storage settings and try again.",
+                );
+                $("login-password").value = "";
+                $("login-password").focus();
+                return;
+             }
+
+             if (!getStoredUser()) {
+                try {
+                   sessionStorage.removeItem(SESSION_KEY);
+                } catch {
+                   // Continue showing the login error if cleanup is unavailable.
+                }
+                setLoginError("Unable to create a valid login session. Please try again.");
+                $("login-password").value = "";
+                $("login-password").focus();
+                return;
+             }
+
+             showApp();
+          }
+
+          function signOut() {
+             try {
+                sessionStorage.removeItem(SESSION_KEY);
+             } catch {
+                // Continue to the login screen even if sessionStorage is unavailable.
+             }
+
+             showLoginScreen();
+          }
+
+          function togglePassword() {
+             const input = $("login-password");
+             const button = $("password-toggle");
+             const showing = input.type === "text";
+
+             input.type = showing ? "password" : "text";
+             button.textContent = showing ? "Show" : "Hide";
+             button.setAttribute(
+                "aria-label",
+                showing ? "Show password" : "Hide password",
+             );
+
+             input.focus();
+          }
+
+          function initializeAuth() {
+             $("login-form").addEventListener("submit", login);
+
+             if (getStoredUser()) {
+                showApp();
+             } else {
+                showLoginScreen();
+             }
+          }
+
+         function toast(msg, type = "") {
+            const el = document.createElement("div");
+            el.className = `toast ${type}`.trim();
+            el.textContent = msg;
+            $("toasts").appendChild(el);
+            setTimeout(() => el.remove(), 4200);
+         }
+         function setBusy(id, busy, label) {
+            const b = $(id);
+            b.disabled = busy;
+            b.replaceChildren();
+            if (busy) {
+               const s = document.createElement("span");
+               s.className = "spinner";
+               s.setAttribute("aria-hidden", "true");
+               b.append(s, document.createTextNode(" Working…"));
+            } else b.textContent = label;
+         }
+         async function errorMessage(res) {
+            try {
+               const e = await res.json();
+               return typeof e.detail === "string"
+                  ? e.detail
+                  : `Request failed (${res.status})`;
+            } catch {
+               return `Request failed (${res.status})`;
+            }
+         }
+         function hideTable() {
+            $("table-wrap").style.display = "none";
+            $("result-body").replaceChildren();
+         }
+         function td(value) {
+            const c = document.createElement("td");
+            c.textContent = value == null ? "—" : String(value);
+            return c;
+         }
+         function renderTable(data) {
+            const body = $("result-body");
+            body.replaceChildren();
+            data.forEach((row) => {
+               const low = Boolean(row.needsReplenishment);
+               const qty = low
+                  ? row.quantityNeeded ??
+                    Number(row.reorderLevel) - Number(row.currentStock)
+                  : "—";
+               const tr = document.createElement("tr");
+               if (low) tr.className = "low";
+               tr.append(
+                  td(row.medicineCode),
+                  td(row.medicineName),
+                  td(row.currentStock),
+                  td(row.reorderLevel),
+                  td(qty),
+               );
+               const status = td("");
+               const badge = document.createElement("span");
+               badge.className = `badge ${low ? "badge-low" : "badge-ok"}`;
+               badge.textContent = low ? "Low stock" : "Healthy";
+               status.appendChild(badge);
+               tr.appendChild(status);
+               body.appendChild(tr);
+            });
+            $("table-wrap").style.display = "block";
+         }
+         function updateKpis(rows, pharmacyId) {
+            if (!Array.isArray(rows)) return;
+            const low = rows.filter((r) =>
+               Boolean(r.needsReplenishment),
+            ).length;
+            $("kpi-total").textContent = String(rows.length);
+            $("kpi-low").textContent = String(low);
+            $("kpi-healthy").textContent = String(rows.length - low);
+            $("kpi-pharmacy").textContent = pharmacyId || "—";
+         }
+         async function getInventory() {
+            const user = getStoredUser();
+            if (!user) {
+               showLoginScreen();
+               return;
+            }
+
+            const pharmacyId = user.pharmacy;
+            $("pharmacyId").value = pharmacyId;
+            if (!pharmacyId) {
+               setStatus(
+                  "view-status",
+                  "Enter a Pharmacy ID to view inventory.",
+                  "error",
+               );
+               $("pharmacyId").focus();
+               return;
+            }
+            setBusy("view-btn", true, "View all inventory");
+            setStatus("view-status", "Fetching inventory…");
+            hideTable();
+            try {
+               const res = await fetch(
+                  `/inventory/${encodeURIComponent(pharmacyId)}`,
+               );
+               if (!res.ok) {
+                  setStatus("view-status", await errorMessage(res), "error");
+                  return;
+               }
+               const data = await res.json();
+               if (!Array.isArray(data))
+                  throw new Error("Unexpected inventory response");
+               renderTable(data);
+               updateKpis(data, pharmacyId);
+               setStatus(
+                  "view-status",
+                  `Showing ${data.length} medicine(s) for ${pharmacyId}.`,
+                  "success",
+               );
+            } catch (e) {
+               setStatus(
+                  "view-status",
+                  "Unable to fetch inventory. Check the API connection and try again.",
+                  "error",
+               );
+            } finally {
+               setBusy("view-btn", false, "View all inventory");
+            }
+         }
+         async function checkReplenishment() {
+            const user = getStoredUser();
+            if (!user) {
+               showLoginScreen();
+               return;
+            }
+
+            const pharmacyId = user.pharmacy;
+            $("pharmacyId").value = pharmacyId;
+            if (!pharmacyId) {
+               setStatus(
+                  "view-status",
+                  "Enter a Pharmacy ID to check replenishment.",
+                  "error",
+               );
+               $("pharmacyId").focus();
+               return;
+            }
+            setBusy("replenish-btn", true, "Check replenishment");
+            setStatus("view-status", "Checking replenishment needs…");
+            hideTable();
+            try {
+               const res = await fetch("/replenishments", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ pharmacyId }),
+               });
+               if (!res.ok) {
+                  setStatus("view-status", await errorMessage(res), "error");
+                  return;
+               }
+               const data = await res.json();
+               const items = Array.isArray(data.items)
+                  ? data.items.map((i) => ({ ...i, needsReplenishment: true }))
+                  : [];
+               if (items.length === 0) {
+                  setStatus(
+                     "view-status",
+                     "All medicines are sufficiently stocked.",
+                     "success",
+                  );
+                  $("kpi-low").textContent = "0";
+                  $("kpi-pharmacy").textContent = pharmacyId;
+                  return;
+               }
+               renderTable(items);
+               $("kpi-low").textContent = String(items.length);
+               $("kpi-pharmacy").textContent = pharmacyId;
+               setStatus(
+                  "view-status",
+                  `${items.length} medicine(s) need replenishment${data.replenishmentId ? ` · Request ID: ${data.replenishmentId}` : ""}.`,
+                  "warning",
+               );
+            } catch (e) {
+               setStatus(
+                  "view-status",
+                  "Unable to check replenishment. Check the API connection and try again.",
+                  "error",
+               );
+            } finally {
+               setBusy("replenish-btn", false, "Check replenishment");
+            }
+         }
+         async function updateStock() {
+            const user = getStoredUser();
+            if (!user) {
+               showLoginScreen();
+               return;
+            }
+
+            const pharmacyId = user.pharmacy,
+               
+               medicineCode = $("update-medicineCode").value.trim(),
+               raw = $("update-stock").value.trim(),
+               stockUsed = Number(raw);
+            if (!pharmacyId) {
+               setStatus("update-status", "Enter a Pharmacy ID.", "error");
+               $("update-pharmacyId").focus();
+               return;
+            }
+            if (!medicineCode) {
+               setStatus("update-status", "Enter a medicine code.", "error");
+               $("update-medicineCode").focus();
+               return;
+            }
+            if (raw === "" || !Number.isInteger(stockUsed) || stockUsed <= 0) {
+               setStatus(
+                  "update-status",
+                  "Quantity dispensed must be a whole number greater than 0.",
+                  "error",
+               );
+               $("update-stock").focus();
+               return;
+            }
+            setBusy("dispense-btn", true, "Dispense stock");
+            setStatus("update-status", "Processing dispensing…");
+            $("stock-breakdown").style.display = "none";
+            $("low-stock-alert").style.display = "none";
+            try {
+               const res = await fetch(
+                  `/inventory/${encodeURIComponent(pharmacyId)}/${encodeURIComponent(medicineCode)}`,
+                  {
+                     method: "PUT",
+                     headers: { "Content-Type": "application/json" },
+                     body: JSON.stringify({ stockUsed }),
+                  },
+               );
+               if (!res.ok) {
+                  setStatus("update-status", await errorMessage(res), "error");
+                  return;
+               }
+               const data = await res.json();
+               $("prev-stock").textContent = String(data.previousStock ?? "—");
+               $("dispensed-qty").textContent = String(data.stockUsed ?? "—");
+               $("new-stock").textContent = String(data.newStock ?? "—");
+               $("stock-breakdown").style.display = "block";
+               const low = Boolean(data.lowStockAlert);
+               if (low) $("low-stock-alert").style.display = "block";
+               setStatus(
+                  "update-status",
+                  low
+                     ? `Dispensed ${data.stockUsed} unit(s). Remaining stock: ${data.newStock}. Low-stock alert triggered.`
+                     : `Dispensed ${data.stockUsed} unit(s). Remaining stock: ${data.newStock}.`,
+                  low ? "warning" : "success",
+               );
+               toast(
+                  low
+                     ? "Dispensing complete. Low stock detected."
+                     : "Stock updated successfully.",
+                  low ? "warning" : "",
+               );
+               const current = $("pharmacyId").value.trim();
+               if (
+                  $("table-wrap").style.display !== "none" &&
+                  current === pharmacyId
+               )
+                  await getInventory();
+            } catch (e) {
+               setStatus(
+                  "update-status",
+                  "Unable to update stock. Check the API connection and try again.",
+                  "error",
+               );
+            } finally {
+               setBusy("dispense-btn", false, "Dispense stock");
+            }
+         }
+         initializeAuth();
+      </script>
+   </body>
 </html>
