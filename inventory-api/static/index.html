@@ -1,140 +1,142 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Pharmacy Inventory Replenishment</title>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Pharmacy Inventory Replenishment</title>
+<!-- Microsoft Authentication Library -->
+<script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; background: #f4f6f9; padding: 30px; }
+h1   { color: #461E96; margin-bottom: 5px; }
+p    { color: #555; margin-bottom: 20px; }
+.card {
+  background: white; padding: 30px; border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  max-width: 960px; margin: auto;
+}
 
-  <!-- Microsoft Authentication Library -->
-  <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
+/* Login Screen */
+#login-screen {
+  text-align: center; padding: 60px 30px;
+}
+#login-screen h1 { margin-bottom: 15px; }
+#login-screen p  { margin-bottom: 30px; font-size: 16px; }
+.btn-login {
+  background: #461E96; color: white;
+  padding: 14px 40px; border: none;
+  border-radius: 6px; font-size: 16px;
+  cursor: pointer; display: inline-flex;
+  align-items: center; gap: 10px;
+}
+.btn-login:hover { opacity: 0.85; }
+#login-error {
+  margin-top: 20px; color: #cc0000;
+  font-size: 14px; display: none;
+}
 
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Arial, sans-serif; background: #f4f6f9; padding: 30px; }
-    h1   { color: #461E96; margin-bottom: 5px; }
-    p    { color: #555; margin-bottom: 20px; }
-
-    .card {
-      background: white; padding: 30px; border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      max-width: 960px; margin: auto;
-    }
-
-    /* Login Screen */
-    #login-screen { text-align: center; padding: 60px 30px; }
-    #login-screen h1 { margin-bottom: 15px; }
-    #login-screen p  { margin-bottom: 30px; }
-    .btn-login {
-      background: #461E96; color: white;
-      padding: 14px 40px; border: none;
-      border-radius: 6px; font-size: 16px; cursor: pointer;
-    }
-    .btn-login:hover { opacity: 0.85; }
-
-    /* App Screen */
-    #app-screen { display: none; }
-
-    .user-bar {
-      display: flex; justify-content: space-between;
-      align-items: center; margin-bottom: 20px;
-      padding: 12px 16px; background: #f0eaff;
-      border-radius: 8px;
-    }
-    .user-bar span { color: #461E96; font-weight: bold; font-size: 14px; }
-    .btn-logout {
-      background: #E6008C; color: white;
-      padding: 6px 18px; border: none;
-      border-radius: 5px; cursor: pointer; font-size: 13px;
-    }
-
-    .section {
-      border: 1px solid #e0e0e0; border-radius: 8px;
-      padding: 20px; margin-bottom: 24px;
-    }
-    .section-title {
-      font-size: 14px; font-weight: bold; color: #461E96;
-      text-transform: uppercase; letter-spacing: 0.5px;
-      margin-bottom: 14px; padding-bottom: 8px;
-      border-bottom: 2px solid #f0eaff;
-    }
-    .row { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
-    input {
-      padding: 10px; flex: 1; min-width: 160px;
-      border: 1px solid #ccc; border-radius: 5px; font-size: 14px;
-    }
-    input:focus { outline: none; border-color: #461E96; }
-    button {
-      padding: 10px 18px; border: none; border-radius: 5px;
-      cursor: pointer; font-size: 14px; color: white; white-space: nowrap;
-    }
-    .btn-primary   { background: #461E96; }
-    .btn-secondary { background: #00B4E6; }
-    .btn-warning   { background: #E6008C; }
-    button:hover   { opacity: 0.85; }
-
-    table  { width: 100%; border-collapse: collapse; margin-top: 16px; }
-    th     { background: #461E96; color: white; padding: 10px; text-align: left; }
-    td     { padding: 10px; border-bottom: 1px solid #eee; font-size: 14px; }
-    .badge-low {
-      background: #E6008C; color: white;
-      padding: 3px 10px; border-radius: 10px; font-size: 12px;
-    }
-    .badge-ok {
-      background: #00DC8C; color: white;
-      padding: 3px 10px; border-radius: 10px; font-size: 12px;
-    }
-    .status {
-      margin-top: 10px; font-style: italic;
-      color: #555; font-size: 14px; min-height: 20px;
-    }
-    .status.success { color: #007700; font-style: normal; font-weight: bold; }
-    .status.error   { color: #cc0000; font-style: normal; font-weight: bold; }
-    .status.warning { color: #E6008C; font-style: normal; font-weight: bold; }
-    tr.low  { background: #fff0f5; }
-    .alert-box {
-      background: #fff0f5; border: 1px solid #E6008C;
-      border-radius: 8px; padding: 14px 18px;
-      margin-top: 14px; display: none;
-    }
-    .alert-box p { color: #cc0000; margin: 0; font-weight: bold; }
-    .stock-breakdown {
-      background: #f0f9ff; border: 1px solid #00B4E6;
-      border-radius: 8px; padding: 14px 18px;
-      margin-top: 14px; display: none; font-size: 14px;
-    }
-    .stock-breakdown span { font-weight: bold; color: #461E96; }
-  </style>
+/* App Screen */
+#app-screen { display: none; }
+.user-bar {
+  display: flex; justify-content: space-between;
+  align-items: center; margin-bottom: 20px;
+  padding: 12px 16px; background: #f0eaff;
+  border-radius: 8px;
+}
+.user-info { color: #461E96; font-weight: bold; font-size: 14px; }
+.btn-logout {
+  background: #E6008C; color: white;
+  padding: 6px 18px; border: none;
+  border-radius: 5px; cursor: pointer; font-size: 13px;
+}
+.section {
+  border: 1px solid #e0e0e0; border-radius: 8px;
+  padding: 20px; margin-bottom: 24px;
+}
+.section-title {
+  font-size: 14px; font-weight: bold; color: #461E96;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  margin-bottom: 14px; padding-bottom: 8px;
+  border-bottom: 2px solid #f0eaff;
+}
+.row { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+input {
+  padding: 10px; flex: 1; min-width: 160px;
+  border: 1px solid #ccc; border-radius: 5px; font-size: 14px;
+}
+input:focus { outline: none; border-color: #461E96; }
+button {
+  padding: 10px 18px; border: none; border-radius: 5px;
+  cursor: pointer; font-size: 14px; color: white; white-space: nowrap;
+}
+.btn-primary   { background: #461E96; }
+.btn-secondary { background: #00B4E6; }
+.btn-warning   { background: #E6008C; }
+button:hover   { opacity: 0.85; }
+table  { width: 100%; border-collapse: collapse; margin-top: 16px; }
+th     { background: #461E96; color: white; padding: 10px; text-align: left; }
+td     { padding: 10px; border-bottom: 1px solid #eee; font-size: 14px; }
+.badge-low {
+  background: #E6008C; color: white;
+  padding: 3px 10px; border-radius: 10px; font-size: 12px;
+}
+.badge-ok {
+  background: #00DC8C; color: white;
+  padding: 3px 10px; border-radius: 10px; font-size: 12px;
+}
+.status {
+  margin-top: 10px; font-style: italic;
+  color: #555; font-size: 14px; min-height: 20px;
+}
+.status.success { color: #007700; font-style: normal; font-weight: bold; }
+.status.error   { color: #cc0000; font-style: normal; font-weight: bold; }
+.status.warning { color: #E6008C; font-style: normal; font-weight: bold; }
+tr.low { background: #fff0f5; }
+.alert-box {
+  background: #fff0f5; border: 1px solid #E6008C;
+  border-radius: 8px; padding: 14px 18px;
+  margin-top: 14px; display: none;
+}
+.alert-box p { color: #cc0000; margin: 0; font-weight: bold; }
+.stock-breakdown {
+  background: #f0f9ff; border: 1px solid #00B4E6;
+  border-radius: 8px; padding: 14px 18px;
+  margin-top: 14px; display: none; font-size: 14px;
+}
+.stock-breakdown span { font-weight: bold; color: #461E96; }
+</style>
 </head>
 <body>
 <div class="card">
 
-  <!-- ─── LOGIN SCREEN ─────────────────────── -->
+  <!-- LOGIN SCREEN -->
   <div id="login-screen">
     <h1>💊 Pharmacy Inventory Replenishment</h1>
-    <p>Please sign in with your pharmacy account to continue.</p>
+    <p>Please sign in with your pharmacy Microsoft account to continue.</p>
     <button class="btn-login" onclick="signIn()">
       🔐 Sign In with Microsoft
     </button>
-    <p id="login-status" style="margin-top:20px; color:#461E96;"></p>
+    <p id="login-error"></p>
   </div>
 
-  <!-- ─── APP SCREEN ───────────────────────── -->
+  <!-- APP SCREEN — shown after login -->
   <div id="app-screen">
 
     <!-- User bar -->
     <div class="user-bar">
-      <span>
-        👤 Logged in as: <span id="user-name"></span>
+      <div class="user-info">
+        ✅ <span id="user-name"></span>
         &nbsp;|&nbsp;
         🏥 Pharmacy: <span id="user-pharmacy"></span>
-      </span>
+      </div>
       <button class="btn-logout" onclick="signOut()">Sign Out</button>
     </div>
 
     <h1>💊 Pharmacy Inventory Replenishment</h1>
     <p>Manage medicine inventory, check replenishment needs, and update stock levels.</p>
 
-    <!-- SECTION 1 -->
+    <!-- SECTION 1: View Inventory -->
     <div class="section">
       <div class="section-title">📋 View Inventory / Check Replenishment</div>
       <div class="row">
@@ -161,14 +163,14 @@
       </table>
     </div>
 
-    <!-- SECTION 2 -->
+    <!-- SECTION 2: Dispense Stock -->
     <div class="section">
-      <div class="section-title">✏️ Dispense Medicine / Update Stock Used</div>
+      <div class="section-title">💉 Dispense Medicine / Update Stock Used</div>
       <p style="margin-bottom:14px; font-size:13px; color:#666;">
-        Enter the Pharmacy ID, Medicine Code, and quantity dispensed or used.
-        The system will automatically deduct it from current stock.
-        If remaining stock falls below reorder level, a replenishment alert
-        will be triggered automatically via Service Bus.
+        Enter the Pharmacy ID, Medicine Code, and the quantity dispensed or used.
+        The system will automatically deduct it from current stock. If remaining
+        stock falls below reorder level, a replenishment alert will be triggered
+        automatically via Service Bus.
       </p>
       <div class="row">
         <input type="text"   id="update-pharmacyId"
@@ -185,15 +187,15 @@
         <p>
           📦 Previous Stock: <span id="prev-stock">—</span> units
           &nbsp;|&nbsp;
-          ➖ Dispensed: <span id="dispensed-qty">—</span> units
+          💉 Dispensed: <span id="dispensed-qty">—</span> units
           &nbsp;|&nbsp;
           ✅ Remaining Stock: <span id="new-stock">—</span> units
         </p>
       </div>
       <div class="alert-box" id="low-stock-alert">
         <p>⚠️ Low Stock Alert! This medicine has dropped below its reorder
-           level. A replenishment request has been automatically sent to
-           the Service Bus queue.</p>
+        level. A replenishment request has been automatically sent to
+        the Service Bus queue.</p>
       </div>
     </div>
 
@@ -201,97 +203,107 @@
 </div><!-- end card -->
 
 <script>
-// ─────────────────────────────────────────────────
+// ============================================================
 // MSAL Configuration
-// Replace CLIENT_ID and TENANT_ID with your values
-// from the External Entra ID App Registration
-// ─────────────────────────────────────────────────
+// ⭐ REPLACE the two values below with your actual
+//    External Entra ID App Registration values:
+//    - YOUR_CLIENT_ID  → Application (client) ID
+//    - YOUR_TENANT_ID  → Directory (tenant) ID
+//    Both found in Azure Portal → Pharmacy Inventory
+//    External Tenant → App Registrations
+//    → pharmacy-inventory-app → Overview
+// ============================================================
 const msalConfig = {
   auth: {
-    clientId:    "1a7931a2-d46e-4bf1-9e6c-1f4a5574901e",          // ← Paste your Client ID here
-    authority:   "1398310c-9b73-4d68-b108-d93d682eb18d",  // ← Paste Tenant ID
-    redirectUri: "http://localhost:8000"    // ← Must match what you registered
+    clientId: "1a7931a2-d46e-4bf1-9e6c-1f4a5574901e",
+
+    authority:
+      "https://login.microsoftonline.com/1398310c-9b73-4d68-b108-d93d682eb18d",
+
+    redirectUri: "http://localhost:8080"
   },
+
   cache: {
-    cacheLocation: "sessionStorage"
+    cacheLocation: "sessionStorage",
+    storeAuthStateInCookie: false
   }
 };
 
 const msalInstance = new msal.PublicClientApplication(msalConfig);
-
 const loginRequest = {
   scopes: ["openid", "profile", "email"]
 };
 
-// ─────────────────────────────────────────────────
+// ============================================================
 // On Page Load — Check if Already Logged In
-// ─────────────────────────────────────────────────
+// ============================================================
 window.onload = async function () {
   await msalInstance.initialize();
-
-  // Handle redirect after login
-  const response = await msalInstance.handleRedirectPromise();
-  if (response) {
-    showApp(response.account);
-    return;
-  }
-
-  // Check existing session
-  const accounts = msalInstance.getAllAccounts();
-  if (accounts.length > 0) {
-    showApp(accounts[0]);
-  } else {
-    showLoginScreen();
+  try {
+    // Handle redirect response after login
+    const response = await msalInstance.handleRedirectPromise();
+    if (response && response.account) {
+      showApp(response.account);
+      return;
+    }
+    // Check if already logged in from previous session
+    const accounts = msalInstance.getAllAccounts();
+    if (accounts.length > 0) {
+      showApp(accounts[0]);
+    }
+  } catch (e) {
+    console.error("MSAL init error:", e);
   }
 };
 
-// ─────────────────────────────────────────────────
-// Sign In — Redirects to Microsoft Login Page
-// ─────────────────────────────────────────────────
+// ============================================================
+// Sign In
+// ============================================================
 async function signIn() {
-  document.getElementById("login-status").innerText = "Redirecting to Microsoft login...";
-  await msalInstance.loginRedirect(loginRequest);
+  try {
+    await msalInstance.loginRedirect(loginRequest);
+  } catch (e) {
+    const el = document.getElementById("login-error");
+    el.innerText = "Login failed: " + e.message;
+    el.style.display = "block";
+  }
 }
 
-// ─────────────────────────────────────────────────
+// ============================================================
 // Sign Out
-// ─────────────────────────────────────────────────
+// ============================================================
 function signOut() {
-  msalInstance.logoutRedirect();
+  const accounts = msalInstance.getAllAccounts();
+  if (accounts.length > 0) {
+    msalInstance.logoutRedirect({ account: accounts[0] });
+  }
 }
 
-// ─────────────────────────────────────────────────
-// Show Login Screen
-// ─────────────────────────────────────────────────
-function showLoginScreen() {
-  document.getElementById("login-screen").style.display = "block";
-  document.getElementById("app-screen").style.display   = "none";
-}
-
-// ─────────────────────────────────────────────────
-// Show App After Successful Login
-// Extracts pharmacyId from username prefix
-// ph001@... → PH001
-// ─────────────────────────────────────────────────
+// ============================================================
+// Show App Screen After Successful Login
+// Extract pharmacy ID from username (e.g. ph001@... → PH001)
+// ============================================================
 function showApp(account) {
   document.getElementById("login-screen").style.display = "none";
   document.getElementById("app-screen").style.display   = "block";
 
-  const username   = account.username || account.name;
-  const pharmacyId = username.split("@")[0].toUpperCase();  // ph001 → PH001
+  const username   = account.username || account.name || "";
+  const pharmacyId = username.split("@")[0].toUpperCase(); // ph001 → PH001
 
-  document.getElementById("user-name").innerText     = username;
+  document.getElementById("user-name").innerText    = username;
   document.getElementById("user-pharmacy").innerText = pharmacyId;
-  document.getElementById("pharmacyId").value        = pharmacyId;
-  document.getElementById("update-pharmacyId").value = pharmacyId;
+  document.getElementById("pharmacyId").value        = pharmacyId; // Auto-fill
 }
 
-// ─────────────────────────────────────────────────
-// Get Access Token Silently for API Calls
-// ─────────────────────────────────────────────────
+// ============================================================
+// Get Token Silently for API Calls
+// ============================================================
 async function getToken() {
   const accounts = msalInstance.getAllAccounts();
-  if (accounts.length === 0) { await signIn(); return null; }
+  if (accounts.length === 0) {
+    await signIn();
+    return null;
+  }
   try {
     const result = await msalInstance.acquireTokenSilent({
       ...loginRequest,
@@ -299,31 +311,34 @@ async function getToken() {
     });
     return result.idToken;
   } catch (e) {
-    await msalInstance.acquireTokenRedirect(loginRequest);
+    await msalInstance.acquireTokenRedirect({
+      ...loginRequest,
+      account: accounts[0]
+    });
     return null;
   }
 }
 
-// ─────────────────────────────────────────────────
-// Authenticated Fetch — sends JWT token with every
-// API call so backend can validate the user
-// ─────────────────────────────────────────────────
+// ============================================================
+// Authenticated Fetch
+// Sends JWT token in Authorization header on every API call
+// ============================================================
 async function authFetch(url, options = {}) {
   const token = await getToken();
   if (!token) return null;
   return fetch(url, {
     ...options,
     headers: {
-      ...options.headers,
+      "Content-Type":  "application/json",
       "Authorization": `Bearer ${token}`,
-      "Content-Type":  "application/json"
+      ...(options.headers || {})
     }
   });
 }
 
-// ─────────────────────────────────────────────────
+// ============================================================
 // SECTION 1: View All Inventory
-// ─────────────────────────────────────────────────
+// ============================================================
 async function getInventory() {
   const pharmacyId = document.getElementById("pharmacyId").value.trim();
   if (!pharmacyId) { alert("Please enter a Pharmacy ID"); return; }
@@ -347,7 +362,137 @@ async function getInventory() {
   }
 }
 
-// ─────────────────────────────────────────────────
+// ============================================================
 // SECTION 1: Check Replenishment
-// ─────────────────────────────────────────────────
-async
+// ============================================================
+async function checkReplenishment() {
+  const pharmacyId = document.getElementById("pharmacyId").value.trim();
+  if (!pharmacyId) { alert("Please enter a Pharmacy ID"); return; }
+  setStatus("view-status", "Checking replenishment needs...", "");
+  hideTable();
+  try {
+    const res = await authFetch(`/replenishments`, {
+      method: "POST",
+      body:   JSON.stringify({ pharmacyId })
+    });
+    if (!res || !res.ok) {
+      const err = await res.json();
+      setStatus("view-status", `❌ Error: ${err.detail}`, "error");
+      return;
+    }
+    const data = await res.json();
+    if (!data.items || data.items.length === 0) {
+      setStatus("view-status", "✅ All medicines are sufficiently stocked!", "success");
+      return;
+    }
+    renderTable(data.items.map(i => ({ ...i, needsReplenishment: true })));
+    setStatus("view-status",
+      `⚠️ ${data.items.length} medicine(s) need replenishment — Request ID: ${data.replenishmentId}`,
+      "warning"
+    );
+  } catch (e) {
+    setStatus("view-status", "❌ Network error checking replenishment.", "error");
+  }
+}
+
+// ============================================================
+// SECTION 2: Dispense Stock
+// newStock = currentStock - stockUsed
+// ============================================================
+async function updateStock() {
+  const pharmacyId   = document.getElementById("update-pharmacyId").value.trim();
+  const medicineCode = document.getElementById("update-medicineCode").value.trim();
+  const stockUsed    = document.getElementById("update-stock").value.trim();
+
+  if (!pharmacyId)      { alert("Please enter a Pharmacy ID");      return; }
+  if (!medicineCode)    { alert("Please enter a Medicine Code");     return; }
+  if (stockUsed === "") { alert("Please enter quantity dispensed");  return; }
+  if (parseInt(stockUsed) <= 0) {
+    alert("Quantity must be greater than 0"); return;
+  }
+
+  setStatus("update-status", "Processing dispensing...", "");
+  document.getElementById("low-stock-alert").style.display  = "none";
+  document.getElementById("stock-breakdown").style.display  = "none";
+
+  try {
+    const res = await authFetch(
+      `/inventory/${pharmacyId}/${medicineCode}`,
+      { method: "PUT", body: JSON.stringify({ stockUsed: parseInt(stockUsed) }) }
+    );
+    if (!res || !res.ok) {
+      const err = await res.json();
+      setStatus("update-status", `❌ Error: ${err.detail}`, "error");
+      return;
+    }
+    const data = await res.json();
+    document.getElementById("prev-stock").innerText    = data.previousStock;
+    document.getElementById("dispensed-qty").innerText = data.stockUsed;
+    document.getElementById("new-stock").innerText     = data.newStock;
+    document.getElementById("stock-breakdown").style.display = "block";
+
+    setStatus("update-status",
+      `✅ Dispensed ${data.stockUsed} units of ${medicineCode}. Remaining: ${data.newStock} units.`,
+      "success"
+    );
+
+    if (data.lowStockAlert) {
+      document.getElementById("low-stock-alert").style.display = "block";
+      setStatus("update-status",
+        `⚠️ Dispensed ${data.stockUsed} units. Remaining (${data.newStock}) below reorder level — replenishment sent to queue!`,
+        "warning"
+      );
+    }
+
+    const table      = document.getElementById("result-table");
+    const curPharmId = document.getElementById("pharmacyId").value.trim();
+    if (table.style.display !== "none" && curPharmId === pharmacyId) {
+      await getInventory();
+    }
+  } catch (e) {
+    setStatus("update-status", "❌ Network error updating stock.", "error");
+  }
+}
+
+// ============================================================
+// Render Inventory Table
+// ============================================================
+function renderTable(data) {
+  const tbody = document.getElementById("result-body");
+  tbody.innerHTML = "";
+  data.forEach(row => {
+    const low      = row.needsReplenishment;
+    const qtyNeeded = low
+      ? (row.quantityNeeded ?? (row.reorderLevel - row.currentStock))
+      : "—";
+    tbody.innerHTML += `
+      <tr class="${low ? 'low' : ''}">
+        <td>${row.medicineCode}</td>
+        <td>${row.medicineName}</td>
+        <td>${row.currentStock}</td>
+        <td>${row.reorderLevel}</td>
+        <td>${qtyNeeded}</td>
+        <td><span class="${low ? 'badge-low' : 'badge-ok'}">
+          ${low ? '⚠️ Low Stock' : '✅ OK'}
+        </span></td>
+      </tr>`;
+  });
+  document.getElementById("result-table").style.display = "table";
+}
+
+// ============================================================
+// Helpers
+// ============================================================
+function setStatus(elementId, msg, type) {
+  const el = document.getElementById(elementId);
+  el.innerText  = msg;
+  el.className  = `status ${type}`;
+}
+
+function hideTable() {
+  document.getElementById("result-table").style.display = "none";
+  document.getElementById("result-body").innerHTML = "";
+}
+</script>
+</body>
+</html>
