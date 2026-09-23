@@ -220,7 +220,7 @@ const msalConfig = {
     authority:
       "https://login.microsoftonline.com/1398310c-9b73-4d68-b108-d93d682eb18d",
 
-    redirectUri: "http://localhost:8080"
+    redirectUri: "http://localhost:8000"
   },
 
   cache: {
@@ -237,22 +237,36 @@ const loginRequest = {
 // ============================================================
 // On Page Load — Check if Already Logged In
 // ============================================================
-window.onload = async function () {
-  await msalInstance.initialize();
+ window.onload = async function () {
   try {
-    // Handle redirect response after login
-    const response = await msalInstance.handleRedirectPromise();
+
+    await msalInstance.initialize();
+
+    const response =
+      await msalInstance.handleRedirectPromise();
+
     if (response && response.account) {
       showApp(response.account);
       return;
     }
-    // Check if already logged in from previous session
-    const accounts = msalInstance.getAllAccounts();
+
+    const accounts =
+      msalInstance.getAllAccounts();
+
     if (accounts.length > 0) {
       showApp(accounts[0]);
+    } else {
+      showLoginScreen();
     }
+
   } catch (e) {
     console.error("MSAL init error:", e);
+
+    const el = document.getElementById("login-error");
+    el.innerText = e.message;
+    el.style.display = "block";
+
+    showLoginScreen();
   }
 };
 
@@ -284,15 +298,27 @@ function signOut() {
 // Extract pharmacy ID from username (e.g. ph001@... → PH001)
 // ============================================================
 function showApp(account) {
+
   document.getElementById("login-screen").style.display = "none";
   document.getElementById("app-screen").style.display   = "block";
 
-  const username   = account.username || account.name || "";
-  const pharmacyId = username.split("@")[0].toUpperCase(); // ph001 → PH001
+  const username =
+      account.username || account.name || "";
 
-  document.getElementById("user-name").innerText    = username;
-  document.getElementById("user-pharmacy").innerText = pharmacyId;
-  document.getElementById("pharmacyId").value        = pharmacyId; // Auto-fill
+  const pharmacyId =
+      username.split("@")[0].toUpperCase();
+
+  document.getElementById("user-name").innerText =
+      username;
+
+  document.getElementById("user-pharmacy").innerText =
+      pharmacyId;
+
+  document.getElementById("pharmacyId").value =
+      pharmacyId;
+
+  document.getElementById("update-pharmacyId").value =
+      pharmacyId;
 }
 
 // ============================================================
