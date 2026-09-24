@@ -1131,10 +1131,8 @@
           const SESSION_KEY = "pharmacyAuthenticatedUser";
 
           /*
-           * This frontend-only authentication is suitable for demos/basic projects.
-           * It is NOT sufficient for protecting production credentials or sensitive data.
-           * Production authentication must be handled by a backend using secure password
-           * hashing, sessions/tokens, HTTPS, and server-side authorization.
+           * Frontend-only authentication — credentials are hardcoded in the
+           * USERS object above. No backend auth endpoints are used.
            */
 
           function getStoredUser() {
